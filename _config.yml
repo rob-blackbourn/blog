@@ -24,8 +24,8 @@ description: >- # this means to ignore newlines until "baseurl:"
   Robs blog
 baseurl: "/blog"
 url: "https://rob-blackbourn.github.io"
-twitter_username: jekyllrb
-github_username:  jekyll
+twitter_username: robblackbourn
+github_username:  rob-blackbourn
 
 # Build settings
 theme: minima
