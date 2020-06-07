@@ -1,6 +1,7 @@
 ---
 layout: post
 title:  "JavaScript Operator Overloading"
+date:   2020-06-07 16:29:00 +0100
 categories: JavaScript operator overloading
 ---
 
