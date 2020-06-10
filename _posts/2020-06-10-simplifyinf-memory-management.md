@@ -1,8 +1,8 @@
 ---
 layout: post
-title:  "Passing arrays between wasm and JavaScript"
+title:  "Simplifying WebAssembly C Memory Management by Using Clang Builtin's"
 date:   2020-06-10 15:12:00 +0100
-categories: Simplifying WebAssembly C Memory Management by Using Clang Builtin's
+categories: JavaScript WebAssembly clang wasm memory malloc
 ---
 
 # Simplifying WebAssembly C Memory Management by Using Clang Builtin's
