@@ -213,13 +213,6 @@ export class Series {
     )
   }
 
-  [Symbol.for('+')] (other) {
-    return new Series(
-      `${this.name}+${other.name}`,
-      this.array.map((value, index) => value + other.array[index])
-    )
-  }
-
   [Symbol.for('-')] (other) {
     return new Series(
       `${this.name}-${other.name}`,
@@ -231,6 +224,13 @@ export class Series {
     return new Series(
       `${this.name}*${other.name}`,
       this.array.map((value, index) => value * other.array[index])
+    )
+  }
+
+  [Symbol.for('/')] (other) {
+    return new Series(
+      `${this.name}/${other.name}`,
+      this.array.map((value, index) => value / other.array[index])
     )
   }
 
