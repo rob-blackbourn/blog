@@ -234,13 +234,6 @@ export class Series {
     )
   }
 
-  [Symbol.for('/')] (other) {
-    return new Series(
-      `${this.name}/${other.name}`,
-      this.array.map((value, index) => value / other.array[index])
-    )
-  }
-
   toString () {
     return `(${this.name}): ${this.array.join(', ')}`
   }
