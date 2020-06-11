@@ -30,7 +30,7 @@ In plain old JavaScript this is not possible. Let's see how we can implement it.
 
 So what is a *DataFrame*? To answer this we first need to look at a *Series*.
 
-### What is a Series?
+### So What is a Series?
 
 A *Series* is the building block of a *DataFrame*. I take a *Series* to be a
 named vector (array), which will be initialised as follows.
@@ -53,7 +53,7 @@ let weight = new Series('weight', [81.3, 73.2, 68.9, 92.1])
 let score = height / weight
 ```
 
-### What is a DataFrame
+### So What is a DataFrame?
 
 I take a *DataFrame* to be a collection of *Series*.
 
@@ -165,6 +165,8 @@ and running it.
 
 ## The Implementation
 
+Put the code in a subdirectory called `src`.
+
 ### Series Code
 
 In the `src` directory create a file called `Series.js` with the following
@@ -245,7 +247,8 @@ The code can be split into two parts.
 The constructor returns a `Proxy`
 object, which  intercepts calls to the Series. It first checks if the property
 or function is provided by the Series itself. If not it delegates the action
-to the array. Note how we the `Proxy` is returned from the constructor.
+to the array. Note how the `Proxy` is returned from the constructor; this is a
+poorly documented feature.
 
 The operators are provided by the `[Symbol.for('+')]` methods.
 
@@ -322,10 +325,12 @@ export class DataFrame {
 }
 ```
 
+This would be pretty short without the `toString`!
+
 As with the `Series` class we use a `Proxy` object to control property
 accessing.
 
-I decided to keep the constructor semantically clean; it just takes an array
+I decided to keep the constructor clean; it just takes an array
 of `Series`. However, in the real world we want a variety of constructors. The
 convenience class method `DataFrame.fromObject` provides a way of building the series from
 a list of objects.
@@ -347,7 +352,7 @@ console.log(ratio.toString())
 > (weight/height): 44.72527472527473, 42.03488372093023, 42.6219512195122, 42.287234042553195
 ```
 
-And lets test using array methods to see if the rquest gets forwarded by the
+And let's try using array methods to see if the request gets forwarded by the
 proxy to the array.
 
 ```javascript
@@ -387,5 +392,5 @@ console.log(df.toString())
 
 ## Thoughts
 
-Obviously there's a lot  in a pandas DataFrame not covered here, but I think this
-demonstrates how the basic syntax could be achieved.
+Obviously there's a lot  in a pandas DataFrame not covered here, but I think
+this demonstrates how the basic syntax could be achieved.
