@@ -394,5 +394,5 @@ console.log(df.toString())
 
 ## Thoughts
 
-Obviously there's a lot  ina pandas DataFrame not covered here, but I think this
+Obviously there's a lot  in a pandas DataFrame not covered here, but I think this
 demonstrates how the basic syntax could be achieved.
