@@ -1,7 +1,7 @@
 ---
 layout: post
 title:  "The future of Data Science is JavaScript and WebAssembly"
-date:   2020-06-13 12:41:00 +0100
+date:   2020-06-13 14:57:00 +0100
 categories: datascience data science WebAssembly wasm array arrays JavaScript C DataFrame
 ---
 
