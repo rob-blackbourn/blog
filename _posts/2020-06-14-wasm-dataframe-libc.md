@@ -20,9 +20,9 @@ library to provide memory allocation for my WebAssembly project by writing my
 own memory allocator. In order to use external C packages I will need a
 standard library.
 
-## wasm-libc
+## wsi-libc
 
-The [wasm-libc](https://github.com/WebAssembly/wasi-libc) project does what it
+The [wasi-libc](https://github.com/WebAssembly/wasi-libc) project does what it
 says on the tin by providing a standard library for wasm.
 
 I have changed my setup as my laptop required reinstallation. I'm now running
@@ -41,7 +41,7 @@ found as `/usr/bin/clang-10`.
 
 I installed [wabt](https://github.com/WebAssembly/wabt) in `/opt/wabt`.
 
-I cloned the wasm-libc library and built it as follows.
+I cloned the wasi-libc library and built it as follows.
 
 ```bash
 git clone git@github.com:WebAssembly/wasi-libc.git
