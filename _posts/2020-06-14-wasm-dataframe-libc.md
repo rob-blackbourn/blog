@@ -3,6 +3,7 @@ layout: post
 title:  "Using libc with WebAssembly enabled DataFrames"
 date:   2020-06-14 11:38:00 +0100
 categories: WebAssembly wasm array arrays JavaScript C DataFrame libc wasm-libc clang
+comments: true
 ---
 
 # Using libc with WebAssembly enabled DataFrames

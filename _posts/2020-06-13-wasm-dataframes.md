@@ -3,6 +3,7 @@ layout: post
 title:  "Implementing DataFrames in JavaScript with Calculations in WebAssembly"
 date:   2020-06-13 12:41:00 +0100
 categories: WebAssembly wasm array arrays JavaScript C DataFrame
+comments: true
 ---
 
 # Implementing DataFrames in JavaScript with Calculations in WebAssembly

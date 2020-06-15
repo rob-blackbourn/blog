@@ -3,6 +3,7 @@ layout: post
 title:  "Passing arrays between wasm and JavaScript"
 date:   2020-06-07 14:39:38 +0100
 categories: WebAssembly wasm array arrays JavaScript c
+comments: true
 ---
 
 # How to Pass Arrays Between JavaScript and WebAssembly Modules Written in C

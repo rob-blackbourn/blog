@@ -3,6 +3,7 @@ layout: post
 title:  "Simplifying WebAssembly C Memory Management by Using Clang Builtin's"
 date:   2020-06-10 15:12:00 +0100
 categories: JavaScript WebAssembly clang wasm memory malloc
+comments: true
 ---
 
 # Simplifying WebAssembly C Memory Management by Using Clang Builtin's

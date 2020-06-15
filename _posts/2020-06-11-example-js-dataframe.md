@@ -3,6 +3,7 @@ layout: post
 title:  "An example of a pandas style DataFrame in JavaScript"
 date:   2020-06-10 15:12:00 +0100
 categories: JavaScript WebAssembly dataframe
+comments: true
 ---
 
 # A DataFrame in JavaScript
