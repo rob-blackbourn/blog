@@ -11,7 +11,7 @@ comments: true
 In my
 [first post](https://rob-blackbourn.github.io/blog/webassembly/wasm/array/arrays/javascript/c/2020/06/07/wasm-arrays.html)
 on WebAssembly I dodged the classic "Hello, World!" example as I thought it might
-be a bit tricky. Little did I realise how hard is was going to be!
+be a bit tricky. Little did I realise how hard it was going to be!
 
 In this post I'm going to look at how to solve it. The code for the project
 can be found [here](https://github.com/rob-blackbourn/example-wasm-string-passing).
