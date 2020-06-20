@@ -323,7 +323,14 @@ async function main() {
 main().then(() => console.log('Done'))
 ```
 
-And it works!
+And it works! Here's the output.
+
+```bash
+expected length 11 got 11 byte length was 14
+Hello World
+你好，世界！
+Done
+```
 
 ## Thoughts
 
