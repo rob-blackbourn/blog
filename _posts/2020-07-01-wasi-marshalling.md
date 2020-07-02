@@ -101,7 +101,7 @@ When the function is invoked three things happen. First the input arguments are
 *marshalled*. Memory is allocated for each array, and the array data is copied
 into that memory. The integer value can be passed directly.
 
-Second the function is called with the marthalled aruments and the return value
+Second the function is called with the marshalled aruments and the return value
 is received.
 
 Third the memory for the input arguments is freed, the result value is copied
@@ -116,7 +116,7 @@ passed, or created by the instance. When using the WASM standard library
 provided by [wasi-libc](https://github.com/WebAssembly/wasi-libc) the memory
 management functions `malloc` and `free` can be exported from the instance.
 
-After instantiation they are help in the following class.
+After instantiation they are held in the following class.
 
 ```javascript
 class MemoryManager {
