@@ -225,7 +225,7 @@ we might think this is unnecessary, it is common for C libraries to report
 errors through the `perror` function which returns and error and reports the
 cause to stderr.
 
-There are a small bunh of functions we need to support here. The final outcode
+There are a small bunch of functions we need to support here. The final outcode
 is the following set of imports to the WebAssembly.
 
 ```javascript
