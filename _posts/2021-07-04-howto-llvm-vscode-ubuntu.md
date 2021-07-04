@@ -38,16 +38,17 @@ bullet and decide to build the entire llvm tool-chain.
 
 ## llvm
 
-After cloning llvm and following the build instructions the build starts using `gcc` as the compiler. I
-notice that 10% of the build has occurred in 10 minutes, so I go for a coffee.
-At some point the build crashes on my 12 core 64GB machine, as it runs out of
-memory!
+After cloning llvm and following the build instructions the build starts using
+`gcc` as the compiler. I notice that 10% of the build has occurred in 10
+minutes, so I go for a coffee. At some point the build crashes on my 12 core
+64GB machine, as it runs out of memory!
 
 After a little more googling I install the `lld` linker and set the build type
-to release to reduce memory usage. I kick off the build again, and now I get
-an error complaining about `_Atomic`. Again googling doesn't help much, so I
-decide to use the llvm tool chain to build itself. After installing llvm and
-setting the C and C++ compiler to clang/clang++ I try again and it works!
+to "release" to reduce memory usage. I kick off the build again, and now I get
+a compilation error complaining about `_Atomic` being undefined. Again googling
+doesn't help much, so I decide to use the llvm tool chain to build itself. After
+installing llvm and setting the C and C++ compiler to clang/clang++ I try again
+and it works!
 
 ## lldb-mi revisited
 
@@ -96,6 +97,7 @@ Build lldb-mi:
 
 ```bash
 git clone git@github.com:lldb-tools/lldb-mi.git
+cd lldb-tools
 mkdir build
 cd build
 cmake -G Ninja -DCMAKE_INSTALL_PREFIX=$INSTALL_PREFIX ..
