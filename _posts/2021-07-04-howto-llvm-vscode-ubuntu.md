@@ -113,7 +113,7 @@ export PATH=$HOME/local/lvmm-12.0.0/bin:$PATH
 
 The vscode generated files looked like this:
 
-launch.json
+`launch.json`
 
 ```json
 {
@@ -144,9 +144,10 @@ launch.json
             "miDebuggerPath": "/home/rob/local/llvm-12.0.0/bin/lldb-mi"
         }
     ]
-}```
+}
+```
 
-tasks.json
+`tasks.json`
 
 ```json
 {
