@@ -1,7 +1,7 @@
 ---
 layout: post
 title:  "How To Use clang With vscode On Ubuntu 20.04"
-date:   2021-07-0 14:36:00 +0100
+date:   2021-07-04 14:36:00 +0100
 categories: vscode clang llvm ubuntu 20.04
 comments: true
 ---
