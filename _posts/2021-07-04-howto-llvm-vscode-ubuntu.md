@@ -97,7 +97,7 @@ Build lldb-mi:
 
 ```bash
 git clone git@github.com:lldb-tools/lldb-mi.git
-cd lldb-tools
+cd lldb-mi
 mkdir build
 cd build
 cmake -G Ninja -DCMAKE_INSTALL_PREFIX=$INSTALL_PREFIX ..
