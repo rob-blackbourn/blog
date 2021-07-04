@@ -74,7 +74,7 @@ cd llvm-project
 mkdir build
 cd build
 LLVM_PROJECTS="clang;clang-tools-extra;compiler-rt;debuginfo-tests;libc;libclc;libcxx;libcxxabi;libunwind;lld;lldb;mlir;openmp;parallel-libs;polly;pstl"
-LLVM_TARGETS="X86;WebAssembly"
+LLVM_TARGETS="X86"
 INSTALL_PREFIX=$HOME/local/llvm-12.0.0
 C_COMPILER=/usr/bin/clang
 CXX_COMPILER=/usr/bin/clang++
