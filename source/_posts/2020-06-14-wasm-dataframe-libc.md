@@ -27,7 +27,7 @@ DataFrames. You can find the source code
 ## Introduction
 
 In my previous
-[post](https://rob-blackbourn.github.io/blog/webassembly/wasm/array/arrays/javascript/c/dataframe/2020/06/13/wasm-dataframes.html)
+[post](https://rob-blackbourn.github.io/blog/2020/06/13/wasm-dataframes/)
 I avoided solving the problem of linking to standard
 library to provide memory allocation for my WebAssembly project by writing my
 own memory allocator. In order to use external C packages I will need a

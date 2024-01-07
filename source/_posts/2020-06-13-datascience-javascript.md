@@ -19,10 +19,10 @@ comments: true
 ---
 
 In my previous posts
-[[1]](https://rob-blackbourn.github.io/blog/webassembly/wasm/array/arrays/javascript/c/2020/06/07/wasm-arrays.html)
-[[2]](https://rob-blackbourn.github.io/blog/javascript/webassembly/clang/wasm/memory/malloc/2020/06/10/simplifyinf-memory-management.html)
-[[3]](https://rob-blackbourn.github.io/blog/javascript/webassembly/dataframe/2020/06/10/example-js-dataframe.html)
-[[4]](https://rob-blackbourn.github.io/blog/webassembly/wasm/array/arrays/javascript/c/dataframe/2020/06/13/wasm-dataframes.html)
+[[1]](https://rob-blackbourn.github.io/blog/2020/06/07/wasm-arrays/)
+[[2]](https://rob-blackbourn.github.io/blog/2020/06/10/simplifyinf-memory-management/)
+[[3]](https://rob-blackbourn.github.io/blog/2020/06/10/example-js-dataframe/)
+[[4]](https://rob-blackbourn.github.io/blog/2020/06/13/wasm-dataframes/)
 I demonstrated how to write a simple [pandas](https://pandas.pydata.org)-style
 data frame in JavaScript using [WebAssembly](https://webassembly.org/) (a near
 native speed virtual machine available in every modern browser or server-side

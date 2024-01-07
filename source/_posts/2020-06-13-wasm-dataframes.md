@@ -23,7 +23,7 @@ The code for this post can be found [here](https://github.com/rob-blackbourn/exa
 ## The DataFrame and Series Implementations
 
 The series and data frame implementations are taken from my
-[previous post](https://rob-blackbourn.github.io/blog/javascript/webassembly/dataframe/2020/06/10/example-js-dataframe.html)
+[previous post](https://rob-blackbourn.github.io/blog/2020/06/10/example-js-dataframe/)
 with minor modifications.
 
 ### Type awareness
@@ -250,8 +250,8 @@ export default instance
 ## The WebAssembly Calculations
 
 The calculations have been written in C following the methods describe in
-[this post](https://rob-blackbourn.github.io/blog/webassembly/wasm/array/arrays/javascript/c/2020/06/07/wasm-arrays.html),
-and [this post](https://rob-blackbourn.github.io/blog/javascript/webassembly/clang/wasm/memory/malloc/2020/06/10/simplifyinf-memory-management.html).
+[this post](https://rob-blackbourn.github.io/blog/2020/06/07/wasm-arrays/),
+and [this post](https://rob-blackbourn.github.io/blog/2020/06/10/simplifyinf-memory-management/).
 
 Here is the code for addition.
 

@@ -15,7 +15,7 @@ comments: true
 ---
 
 Following on from my 
-[previous post](https://rob-blackbourn.github.io/blog/webassembly/wasm/array/arrays/javascript/c/2020/06/07/wasm-arrays.html)
+[previous post](https://rob-blackbourn.github.io/blog/2020/06/07/wasm-arrays/)
 regarding passing arrays between JavaScript
 and WebAssembly, I have found out how to remove the need to call back into JavaSrcript
 

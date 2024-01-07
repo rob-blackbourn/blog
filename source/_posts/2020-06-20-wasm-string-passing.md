@@ -17,7 +17,7 @@ comments: true
 ---
 
 In my
-[first post](https://rob-blackbourn.github.io/blog/webassembly/wasm/array/arrays/javascript/c/2020/06/07/wasm-arrays.html)
+[first post](https://rob-blackbourn.github.io/blog/2020/06/07/wasm-arrays/)
 on WebAssembly I dodged the classic "Hello, World!" example as I thought it might
 be a bit tricky. Little did I realise how hard it was going to be!
 

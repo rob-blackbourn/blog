@@ -17,7 +17,7 @@ comments: true
 ---
 
 In my
-[previous post](https://rob-blackbourn.github.io/blog/webassembly/wasm/strings/javascript/c/libc/wasm-libc/clang/2020/06/20/wasm-string-passing.html)
+[previous post](https://rob-blackbourn.github.io/blog/2020/06/20/wasm-string-passing/)
 I found out how to pass strings between JavaScript and WebAssembly. The problem
 with that solution was that I had to export `console.log` to the WebAssembly
 module. At some point I want to be able to take some library source code "off

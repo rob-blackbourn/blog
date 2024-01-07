@@ -19,7 +19,7 @@ comments: true
 ---
 
 In my
-[previous post](https://rob-blackbourn.github.io/blog/webassembly/wasm/javascript/c/clang/wasi-sdk/marshalling/2020/07/02/wasi-marshalling.html)
+[previous post](https://rob-blackbourn.github.io/blog/2020/07/02/wasi-marshalling/)
 I described a marshalling library I'd written for WebAssembly (see
 [here](https://github.com/rob-blackbourn/jetblack-wasi-marshalling) for the source). There's one
 problem I have with it; too much copying!

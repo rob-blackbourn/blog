@@ -26,9 +26,9 @@ comments: true
 
 In my previous posts on data frames we looked at how to:
 
-* [Create an expressive syntax using operator overloading and proxies](https://rob-blackbourn.github.io/blog/javascript/webassembly/dataframe/2020/06/10/example-js-dataframe.html)
-* [Use WebAssembly for efficient array calculations](https://rob-blackbourn.github.io/blog/webassembly/wasm/array/arrays/javascript/c/dataframe/2020/06/13/wasm-dataframes.html)
-* [Use libc with WebAssembly](https://rob-blackbourn.github.io/blog/webassembly/wasm/array/arrays/javascript/c/dataframe/libc/wasm-libc/clang/2020/06/14/wasm-dataframe-libc.html)
+* [Create an expressive syntax using operator overloading and proxies](https://rob-blackbourn.github.io/blog/2020/06/10/example-js-dataframe/)
+* [Use WebAssembly for efficient array calculations](https://rob-blackbourn.github.io/blog/2020/06/13/wasm-dataframes/)
+* [Use libc with WebAssembly](https://rob-blackbourn.github.io/blog/2020/06/14/wasm-dataframe-libc/)
 
 The main problem with that implementation was the marshalling layer which was
 hand written. It required all arrays to be copied in and out of the WebAssembly
@@ -49,7 +49,7 @@ toolkit (with it's bin directory on your path).
 ## Usage
 
 You can find more information about the implementation of the marshalling layer in
-[this post](https://rob-blackbourn.github.io/blog/webassembly/wasm/wasi/javascript/c/clang/wasi-sdk/marshalling/finalizer/finalizationregistry/2020/07/07/wasi-finalizers-1.html).
+[this post](https://rob-blackbourn.github.io/blog/2020/07/07/wasi-finalizers-1/).
 What I want to talk about here is *usability*.
 
 Rather than bundle a fixed set of functions with the data frame I wanted it to be a structural object where the functions are
