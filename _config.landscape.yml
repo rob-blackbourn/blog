@@ -3,7 +3,7 @@ menu:
   Home: /
   Archives: /archives
 rss: /atom.xml
-banner: images/brighton-beach.jpg
+banner: blog/images/brighton-beach.jpg
 subtitle: ''
 
 # Content
@@ -35,5 +35,3 @@ twitter:
 links:
   github: https://github.com/rob-blackbourn
   linkedin: https://www.linkedin.com/in/rob-blackbourn/
-#  twitter: https://twitter.com/your_twitter_account
-#  telegram: https://t.me/your_telegram_account
