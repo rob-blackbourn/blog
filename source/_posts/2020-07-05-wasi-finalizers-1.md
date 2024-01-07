@@ -36,7 +36,7 @@ Enter finalizers ...
 Until recently there has been no way to hook into the end of a JavaScript
 object's lifecycle. There is a "stage 3" proposal that is going into production:
 [FinalizationRegistry](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/FinalizationRegistry).
-This is currently avaliable in node (since 13.0.0), but must be enabled with the
+This is currently available in node (since 13.0.0), but must be enabled with the
 flag "--harmony-weak-refs".
 It should be available in chrome (84), and firefox (79) in a few days.
 
@@ -129,7 +129,7 @@ which is not how I read the documentation.
 
 ### Arrays
 
-Here is how we might unmarhsall an array using the copy then free pattern.
+Here is how we might un-marshall an array using the copy then free pattern.
 
 ```javascript
 unmarshall (memoryManager, address, array) {
@@ -172,10 +172,10 @@ the `Array` can hold references to other arrays, rather than just numbers.
 
 ### Strings
 
-Strings present a minor problem. Once we have unmarshalled a byte array to a
+Strings present a minor problem. Once we have un-marshalled a byte array to a
 string we have nowhere to keep the address from the WebAssembly instance. To
 solve this I created a `StringBuffer` which is an extension of `Uint8Array`,
-with a couple of class methods for marshalling and unmarshalling, and an
+with a couple of class methods for marshalling and un-marshalling, and an
 instance method to decode the string.
 
 ### Pointers

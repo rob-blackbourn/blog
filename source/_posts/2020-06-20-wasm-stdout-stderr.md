@@ -91,7 +91,7 @@ Clearly the line at the start `#define __wasi__` needs some explanation. Without
 this, compilation broke with the error
 `#error <wasi/api.h> is only supported on WASI platforms`. When I checked the
 include file the `__wasi__` was the culprit. Defining it enabled the
-stdio functionaility.
+stdio functionality.
 
 ## The JavaScript Example
 

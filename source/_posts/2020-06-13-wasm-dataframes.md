@@ -55,7 +55,7 @@ export class Series {
     return new Proxy(this, {
       get: (obj, prop, receiver) => {
         if (prop in obj) {
-          // This is a known property: i.e. name, arry or type.
+          // This is a known property: i.e. name, array or type.
           return Reflect.get(obj, prop, receiver)
         } else if (arrayMethods.has(prop)) {
           // The property is an operator.

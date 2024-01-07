@@ -37,7 +37,7 @@ So what is a *DataFrame*? To answer this we first need to look at a *Series*.
 ### So What is a Series?
 
 A *Series* is the building block of a *DataFrame*. I take a *Series* to be a
-named vector (array), which will be initialised as follows.
+named vector (array), which will be initialized as follows.
 
 ```javascript
 let s1 = new Series('height', [1.82, 1.76, 1.72, 1.89])

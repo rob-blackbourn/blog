@@ -102,13 +102,13 @@ const result = proto.invoke(
 ```
 
 As well as the function arguments we provide `wasi.memoryManager` to allow
-access to the WebAssembly memory and `wasi.instance` to retirve the function.
+access to the WebAssembly memory and `wasi.instance` to retrieve the function.
 
 When the function is invoked three things happen. First the input arguments are
 *marshalled*. Memory is allocated for each array, and the array data is copied
 into that memory. The integer value can be passed directly.
 
-Second the function is called with the marshalled aruments and the return value
+Second the function is called with the marshalled arguments and the return value
 is received.
 
 Third the memory for the input arguments is freed, the result value is copied
@@ -118,7 +118,7 @@ allocated inside the WebAssembly instance is freed.
 ## Memory
 
 While not strictly part of WASI, memory management is the first problem to
-solve. When a WebAssembly module is instatiated a memory buffer is either
+solve. When a WebAssembly module is instantiated a memory buffer is either
 passed, or created by the instance. When using the WASM standard library
 provided by [wasi-libc](https://github.com/WebAssembly/wasi-libc) the memory
 management functions `malloc` and `free` can be exported from the instance.
@@ -148,7 +148,7 @@ function marshallFloat64Array(memoryManager, array) {
 ```
 
 An array that was allocated inside the WebAssembly instance might be
-unmarshalled as follows.
+un-marshalled as follows.
 
 ```javascript
 function unmarshallFloat64Array(memoryManager, address, length) {
@@ -232,7 +232,7 @@ we might think this is unnecessary, it is common for C libraries to report
 errors through the `perror` function which returns and error and reports the
 cause to stderr.
 
-There are a small bunch of functions we need to support here. The final outcode
+There are a small bunch of functions we need to support here. The final outcome
 is the following set of imports to the WebAssembly.
 
 ```javascript
@@ -250,13 +250,13 @@ const res = await WebAssembly.instantiate(buf, {
 ```
 
 With this relatively small set of imports we can import the vast majority of
-publically available C libraries.
+publicly available C libraries.
 
 ## Strings & Stdout/Stderr
 
 You can check out the source code fore the implementations and use of these.
 They are not typically use from JavaScript, and are only provided to allow
-imported C libarries to run.
+imported C libraries to run.
 
 ## Wiring It Up
 
@@ -312,8 +312,8 @@ WebAssembly.instantiateStreaming(
 
 ## Thoughts
 
-We've got a ganeric marshalling layer between JavaScript and WebAssembly which
-is pretty cool! We've also got enough WASI to drop in publically available
+We've got a generic marshalling layer between JavaScript and WebAssembly which
+is pretty cool! We've also got enough WASI to drop in publicly available
 `C` libraries.
 
 We've not yet addressed C++ libraries and we're waiting for the `flang` compiler
