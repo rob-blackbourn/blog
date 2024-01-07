@@ -79,6 +79,79 @@
       <div class="outer">
         <section id="main">
   
+    <article id="post-datascience-javascript" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  <div class="article-meta">
+    <a href="/blog/2020/06/13/datascience-javascript/" class="article-date">
+  <time class="dt-published" datetime="2020-06-13T13:57:00.000Z" itemprop="datePublished">2020-06-13</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/blog/categories/WebAssembly/">WebAssembly</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="p-name article-title" href="/blog/2020/06/13/datascience-javascript/">The future of Data Science is JavaScript and WebAssembly</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="e-content article-entry" itemprop="articleBody">
+      
+        <p>In my previous posts<br><a href="https://rob-blackbourn.github.io/blog/2020/06/07/wasm-arrays/">[1]</a><br><a href="https://rob-blackbourn.github.io/blog/2020/06/10/simplifyinf-memory-management/">[2]</a><br><a href="https://rob-blackbourn.github.io/blog/2020/06/10/example-js-dataframe/">[3]</a><br><a href="https://rob-blackbourn.github.io/blog/2020/06/13/wasm-dataframes/">[4]</a><br>I demonstrated how to write a simple <a target="_blank" rel="noopener" href="https://pandas.pydata.org/">pandas</a>-style<br>data frame in JavaScript using <a target="_blank" rel="noopener" href="https://webassembly.org/">WebAssembly</a> (a near<br>native speed virtual machine available in every modern browser or server-side<br>engine such as <a target="_blank" rel="noopener" href="https://nodejs.org/en/">nodejs</a>).<br>This demonstrated the following features:</p>
+<ul>
+<li><p>Elegant Syntax</p>
+<p>Expressions can be written in the following manner.</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> df = <span class="title class_">DataFrame</span>.<span class="title function_">fromObject</span>(</span><br><span class="line">  [</span><br><span class="line">    &#123; <span class="attr">col0</span>: <span class="string">&#x27;a&#x27;</span>, <span class="attr">col1</span>: <span class="number">5</span>, <span class="attr">col2</span>: <span class="number">8.1</span> &#125;,</span><br><span class="line">    &#123; <span class="attr">col0</span>: <span class="string">&#x27;b&#x27;</span>, <span class="attr">col1</span>: <span class="number">6</span>, <span class="attr">col2</span>: <span class="number">3.2</span> &#125;</span><br><span class="line">  ],</span><br><span class="line">  &#123; <span class="attr">col0</span>: <span class="string">&#x27;object&#x27;</span>, <span class="attr">col1</span>: <span class="string">&#x27;int&#x27;</span>, <span class="attr">col2</span>: <span class="string">&#x27;double&#x27;</span>&#125;</span><br><span class="line">)</span><br><span class="line"></span><br><span class="line">df[<span class="string">&#x27;col3&#x27;</span>] = df[<span class="string">&#x27;col1&#x27;</span>] + df[<span class="string">&#x27;col2&#x27;</span>]</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>Near native speed.</p>
+<p>All operations are written in C and are performed in a compiled WebAssembly<br>module.</p>
+</li>
+<li><p>Portable.</p>
+<p>The code runs in <strong>any</strong> browser or server side JavaScript engine (e.g.<br>chrome, nodejs, etc.).</p>
+</li>
+<li><p>Uses standard tooling.</p>
+<p>The C code was compiled with the current standard<br><a target="_blank" rel="noopener" href="https://clang.llvm.org/">clang</a><br>compiler which supports WebAssembly<br><a target="_blank" rel="noopener" href="https://lld.llvm.org/WebAssembly.html">out of the box</a>.</p>
+</li>
+</ul>
+<h2 id="The-Future-of-Data-Science"><a href="#The-Future-of-Data-Science" class="headerlink" title="The Future of Data Science?"></a>The Future of Data Science?</h2><p>Clearly this is a bold claim!</p>
+<p>There are currently two clear platform leaders in the data science eco-system:<br><a target="_blank" rel="noopener" href="https://cran.r-project.org/">R</a>,<br>and <a target="_blank" rel="noopener" href="https://www.python.org/">Python</a><br>using the <a target="_blank" rel="noopener" href="https://www.scipy.org/">scipy</a> toolkit,<br>and also a number of attractive outsiders. The choice of which platform to<br>choose typically depends on language preference, but more compellingly what<br>packages a particular language&#x2F;version provides. It is not unusual for a project<br>to be constrained to a legacy version of a platform simply because a key package<br>has not been ported to a current version.</p>
+<p>So how can JavaScript and WebAssembly help?</p>
+<h3 id="Elegant-Syntax"><a href="#Elegant-Syntax" class="headerlink" title="Elegant Syntax"></a>Elegant Syntax</h3><p>Surprisingly, yes! The posts referenced above clearly demonstrate how JavaScript<br>can be written in a manner which elegantly represents vector-arithmetic.</p>
+<h3 id="Speed"><a href="#Speed" class="headerlink" title="Speed"></a>Speed</h3><p>With WebAssembly there is no significant compromise in speed over natively<br>compiled languages.</p>
+<h3 id="Bindings"><a href="#Bindings" class="headerlink" title="Bindings"></a>Bindings</h3><p>With other languages a <em>binding</em> must be written to integrate a package<br>into the language. In many cases this is <strong>completely</strong> unnecessary for<br>WebAssembly.</p>
+<h3 id="Fortran"><a href="#Fortran" class="headerlink" title="Fortran"></a>Fortran</h3><p>In my opinion this is the killer advantage. There are a huge number of key data<br>science libraries implemented in many different flavours of Fortran. Binding to<br>these libraries is an ongoing and fraught task.</p>
+<p>Happily <a target="_blank" rel="noopener" href="https://llvm.org/">LLVM</a> (a language compiler supported by the majority<br>of operating systems) is currently incorporating<br><a target="_blank" rel="noopener" href="https://github.com/flang-compiler/flang">flang</a><br>(a Fortran compiler) into it’s toolchain, supporting <strong>all</strong> versions of Fortran<br>up to and including 2018. This provides the possibility of compiling <strong>any</strong><br>Fortran package directly to WebAssembly.</p>
+<h2 id="The-Catch"><a href="#The-Catch" class="headerlink" title="The Catch"></a>The Catch</h2><p>The first catch is operator overloading. I’m not sure if “catch” is the right<br>word. My solution using the <a target="_blank" rel="noopener" href="https://babeljs.io/">babel</a> transpiler works fine,<br>and transpiling is how <a target="_blank" rel="noopener" href="https://reactjs.org/">React</a> (one of the most popular web<br>frameworks, which uses custom syntax in JavaScript) does and will always work.<br>There is a <a target="_blank" rel="noopener" href="https://github.com/tc39/proposal-operator-overloading">proposal</a><br>to incorporate operator overloading into JavaScript (currently at stage 1 where<br>3 means acceptance), which leads me to believe it is a feature which my become<br>native to the language.</p>
+<p>The second catch is the standard library. You’ll note if you’ve read the<br>previous posts that I had to provide a memory allocator as this is not available<br>in the WebAssembly environment. WebAssembly is just a virtual machine, and at<br>present it doesn’t come with the usual support code which most libraries depend<br>on. This is all being built out at the present in the form of<br><a target="_blank" rel="noopener" href="https://wasi.dev/">wasi</a>, but it’s not here yet.</p>
+<p>Lastly flang isn’t in the current stable release of LLVM. It was<br><a target="_blank" rel="noopener" href="https://www.youtube.com/watch?v=yenZorebMOA">incorporated in the repo in November 2019</a>,<br>and I would expect it to be in the next major release.</p>
+<h2 id="Do-I-Want-to-Write-in-JavaScript"><a href="#Do-I-Want-to-Write-in-JavaScript" class="headerlink" title="Do I Want to Write in JavaScript?"></a>Do I Want to Write in JavaScript?</h2><p>Personally I don’t care what language I write in, as long as it doesn’t get in<br>the way of the problem I’m trying to solve. Because of the low cost of entry,<br>JavaScript has become ubiquitous, and so it’s level of documentation and support<br>is huge, which I like.</p>
+<p>If it provides seamless access to the packages I need I’m a buyer.</p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="https://rob-blackbourn.github.io/blog/2020/06/13/datascience-javascript/" data-id="clr3icj9d0005k2ft9dtp7fel" data-title="The future of Data Science is JavaScript and WebAssembly" class="article-share-link"><span class="fa fa-share">Share</span></a>
+      
+      
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/blog/tags/C/" rel="tag">C</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/blog/tags/DataFrame/" rel="tag">DataFrame</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/blog/tags/JavaScript/" rel="tag">JavaScript</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/blog/tags/WebAssembly/" rel="tag">WebAssembly</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/blog/tags/array/" rel="tag">array</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/blog/tags/arrays/" rel="tag">arrays</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/blog/tags/data/" rel="tag">data</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/blog/tags/datascience/" rel="tag">datascience</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/blog/tags/science/" rel="tag">science</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/blog/tags/wasm/" rel="tag">wasm</a></li></ul>
+
+    </footer>
+  </div>
+  
+</article>
+
+
+
+  
     <article id="post-wasm-dataframes" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
   <div class="article-meta">
     <a href="/blog/2020/06/13/wasm-dataframes/" class="article-date">
@@ -107,7 +180,7 @@
       
         <p>This post describes a simple pandas style DataFrame implementation with the<br>array calculations performed in JavaScript.</p>
 <p>The code for this post can be found <a target="_blank" rel="noopener" href="https://github.com/rob-blackbourn/example-wasm-dataframe-1">here</a>.</p>
-<h2 id="The-DataFrame-and-Series-Implementations"><a href="#The-DataFrame-and-Series-Implementations" class="headerlink" title="The DataFrame and Series Implementations"></a>The DataFrame and Series Implementations</h2><p>The series and data frame implementations are taken from my<br><a href="https://rob-blackbourn.github.io/blog/javascript/webassembly/dataframe/2020/06/10/example-js-dataframe.html">previous post</a><br>with minor modifications.</p>
+<h2 id="The-DataFrame-and-Series-Implementations"><a href="#The-DataFrame-and-Series-Implementations" class="headerlink" title="The DataFrame and Series Implementations"></a>The DataFrame and Series Implementations</h2><p>The series and data frame implementations are taken from my<br><a href="https://rob-blackbourn.github.io/blog/2020/06/10/example-js-dataframe/">previous post</a><br>with minor modifications.</p>
 <h3 id="Type-awareness"><a href="#Type-awareness" class="headerlink" title="Type awareness"></a>Type awareness</h3><p>The series (and therefore the data frame) will need to be aware of the type of<br>data they contain. For simplicity I have limited the types to:</p>
 <ul>
 <li><code>&#39;int&#39;</code></li>
@@ -137,7 +210,7 @@
 <h2 id="Array-Methods"><a href="#Array-Methods" class="headerlink" title="Array Methods"></a>Array Methods</h2><p>A new file has been added to create an <code>ArrayMethods</code> singleton. This is used<br>as a central store of array methods.</p>
 <figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">ArrayMethods</span> &#123;</span><br><span class="line">  <span class="title function_">constructor</span> () &#123;</span><br><span class="line">    <span class="keyword">if</span> (!<span class="title class_">ArrayMethods</span>.<span class="property">instance</span>) &#123;</span><br><span class="line">      <span class="variable language_">this</span>.<span class="property">_methods</span> = &#123;&#125;</span><br><span class="line">      <span class="title class_">ArrayMethods</span>.<span class="property">instance</span> = <span class="variable language_">this</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="title class_">ArrayMethods</span>.<span class="property">instance</span></span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  set (name, method) &#123;</span><br><span class="line">    <span class="variable language_">this</span>.<span class="property">_methods</span>[name] = method</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  has (name) &#123;</span><br><span class="line">    <span class="keyword">return</span> name <span class="keyword">in</span> <span class="variable language_">this</span>.<span class="property">_methods</span></span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  get (name) &#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="variable language_">this</span>.<span class="property">_methods</span>[name]</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> instance = <span class="keyword">new</span> <span class="title class_">ArrayMethods</span>()</span><br><span class="line"><span class="title class_">Object</span>.<span class="title function_">freeze</span>(instance)</span><br><span class="line"></span><br><span class="line"><span class="keyword">export</span> <span class="keyword">default</span> instance</span><br></pre></td></tr></table></figure>
 
-<h2 id="The-WebAssembly-Calculations"><a href="#The-WebAssembly-Calculations" class="headerlink" title="The WebAssembly Calculations"></a>The WebAssembly Calculations</h2><p>The calculations have been written in C following the methods describe in<br><a href="https://rob-blackbourn.github.io/blog/webassembly/wasm/array/arrays/javascript/c/2020/06/07/wasm-arrays.html">this post</a>,<br>and <a href="https://rob-blackbourn.github.io/blog/javascript/webassembly/clang/wasm/memory/malloc/2020/06/10/simplifyinf-memory-management.html">this post</a>.</p>
+<h2 id="The-WebAssembly-Calculations"><a href="#The-WebAssembly-Calculations" class="headerlink" title="The WebAssembly Calculations"></a>The WebAssembly Calculations</h2><p>The calculations have been written in C following the methods describe in<br><a href="https://rob-blackbourn.github.io/blog/2020/06/07/wasm-arrays/">this post</a>,<br>and <a href="https://rob-blackbourn.github.io/blog/2020/06/10/simplifyinf-memory-management/">this post</a>.</p>
 <p>Here is the code for addition.</p>
 <figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line">__attribute__((used)) <span class="type">int</span>* <span class="title function_">addInt32Arrays</span> <span class="params">(<span class="type">int</span> *array1, <span class="type">int</span>* array2, <span class="type">int</span> length)</span></span><br><span class="line">&#123;</span><br><span class="line">  <span class="type">int</span>* result = (<span class="type">int</span>*) allocateMemory(length * <span class="keyword">sizeof</span>(<span class="type">int</span>));</span><br><span class="line">  <span class="keyword">if</span> (result == <span class="number">0</span>)</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; length; ++i) &#123;</span><br><span class="line">    result[i] = array1[i] + array2[i];</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">return</span> result;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">__attribute__((used)) <span class="type">double</span>* <span class="title function_">addFloat64Arrays</span> <span class="params">(<span class="type">double</span>* array1, <span class="type">double</span>* array2, <span class="type">int</span> length)</span></span><br><span class="line">&#123;</span><br><span class="line">  <span class="type">double</span>* result = (<span class="type">double</span>*) allocateMemory(length * <span class="keyword">sizeof</span>(<span class="type">double</span>));</span><br><span class="line">  <span class="keyword">if</span> (result == <span class="number">0</span>)</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; length; ++i) &#123;</span><br><span class="line">    result[i] = array1[i] + array2[i];</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">return</span> result;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
@@ -164,7 +237,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://rob-blackbourn.github.io/blog/2020/06/13/wasm-dataframes/" data-id="clr3cct9p000e7kft0rv8g6cc" data-title="Implementing DataFrames in JavaScript with Calculations in WebAssembly" class="article-share-link"><span class="fa fa-share">Share</span></a>
+      <a data-url="https://rob-blackbourn.github.io/blog/2020/06/13/wasm-dataframes/" data-id="clr3icj9i000ck2ftdbqla8iv" data-title="Implementing DataFrames in JavaScript with Calculations in WebAssembly" class="article-share-link"><span class="fa fa-share">Share</span></a>
       
       
       
@@ -204,7 +277,7 @@
     
     <div class="e-content article-entry" itemprop="articleBody">
       
-        <p>Following on from my<br><a href="https://rob-blackbourn.github.io/blog/webassembly/wasm/array/arrays/javascript/c/2020/06/07/wasm-arrays.html">previous post</a><br>regarding passing arrays between JavaScript<br>and WebAssembly, I have found out how to remove the need to call back into JavaSrcript</p>
+        <p>Following on from my<br><a href="https://rob-blackbourn.github.io/blog/2020/06/07/wasm-arrays/">previous post</a><br>regarding passing arrays between JavaScript<br>and WebAssembly, I have found out how to remove the need to call back into JavaSrcript</p>
 <h2 id="Prerequisites"><a href="#Prerequisites" class="headerlink" title="Prerequisites"></a>Prerequisites</h2><p>These examples have been tested with <a target="_blank" rel="noopener" href="https://nodejs.org/">nodejs v12.9.1</a>,<br><a target="_blank" rel="noopener" href="https://clang.llvm.org/">clang 10.0.0</a>,<br>and <a target="_blank" rel="noopener" href="https://github.com/WebAssembly/wabt">wabt 1.0.16</a> on Ubuntu 18.04.</p>
 <p>I installed <code>clang</code> in <code>/opt/clang</code>, <code>wabt</code> in <code>/opt/wabt</code>, and I use<br><a target="_blank" rel="noopener" href="https://github.com/nodenv/nodenv">nodenv</a> to manage my <code>nodejs</code> environment.</p>
 <p>Update your path.</p>
@@ -223,7 +296,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://rob-blackbourn.github.io/blog/2020/06/10/simplifyinf-memory-management/" data-id="clr3cct9a00007kft10rl4k53" data-title="Simplifying WebAssembly C Memory Management by Using Clang Builtin&#39;s" class="article-share-link"><span class="fa fa-share">Share</span></a>
+      <a data-url="https://rob-blackbourn.github.io/blog/2020/06/10/simplifyinf-memory-management/" data-id="clr3icj980001k2ftbgbf63xq" data-title="Simplifying WebAssembly C Memory Management by Using Clang Builtin&#39;s" class="article-share-link"><span class="fa fa-share">Share</span></a>
       
       
       
@@ -331,7 +404,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://rob-blackbourn.github.io/blog/2020/06/10/example-js-dataframe/" data-id="clr3cct9i00047kfthvsob8bd" data-title="An example of a pandas style DataFrame in JavaScript" class="article-share-link"><span class="fa fa-share">Share</span></a>
+      <a data-url="https://rob-blackbourn.github.io/blog/2020/06/10/example-js-dataframe/" data-id="clr3icj9b0003k2ftc16b4fua" data-title="An example of a pandas style DataFrame in JavaScript" class="article-share-link"><span class="fa fa-share">Share</span></a>
       
       
       
@@ -504,7 +577,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://rob-blackbourn.github.io/blog/2020/06/07/wasm-arrays/" data-id="clr3cct9k00067kft4khkgetq" data-title="Passing arrays between wasm and JavaScript" class="article-share-link"><span class="fa fa-share">Share</span></a>
+      <a data-url="https://rob-blackbourn.github.io/blog/2020/06/07/wasm-arrays/" data-id="clr3icj940000k2ft8iomf1hc" data-title="Passing arrays between wasm and JavaScript" class="article-share-link"><span class="fa fa-share">Share</span></a>
       
       
       
@@ -553,7 +626,7 @@
   <div class="widget-wrap">
     <h3 class="widget-title">Tag Cloud</h3>
     <div class="widget tagcloud">
-      <a href="/blog/tags/7610/" style="font-size: 10px;">7610</a> <a href="/blog/tags/C/" style="font-size: 17.14px;">C</a> <a href="/blog/tags/DataFrame/" style="font-size: 12.86px;">DataFrame</a> <a href="/blog/tags/FinalizationRegistry/" style="font-size: 11.43px;">FinalizationRegistry</a> <a href="/blog/tags/JavaScript/" style="font-size: 20px;">JavaScript</a> <a href="/blog/tags/WebAssembly/" style="font-size: 20px;">WebAssembly</a> <a href="/blog/tags/array/" style="font-size: 14.29px;">array</a> <a href="/blog/tags/arrays/" style="font-size: 14.29px;">arrays</a> <a href="/blog/tags/clang/" style="font-size: 15.71px;">clang</a> <a href="/blog/tags/cross-compile/" style="font-size: 10px;">cross-compile</a> <a href="/blog/tags/data/" style="font-size: 11.43px;">data</a> <a href="/blog/tags/dataframe/" style="font-size: 11.43px;">dataframe</a> <a href="/blog/tags/datascience/" style="font-size: 10px;">datascience</a> <a href="/blog/tags/dell/" style="font-size: 10px;">dell</a> <a href="/blog/tags/finalizer/" style="font-size: 11.43px;">finalizer</a> <a href="/blog/tags/inspiron/" style="font-size: 10px;">inspiron</a> <a href="/blog/tags/libc/" style="font-size: 12.86px;">libc</a> <a href="/blog/tags/linux/" style="font-size: 10px;">linux</a> <a href="/blog/tags/llvm/" style="font-size: 10px;">llvm</a> <a href="/blog/tags/malloc/" style="font-size: 10px;">malloc</a> <a href="/blog/tags/marshalling/" style="font-size: 12.86px;">marshalling</a> <a href="/blog/tags/memory/" style="font-size: 10px;">memory</a> <a href="/blog/tags/science/" style="font-size: 11.43px;">science</a> <a href="/blog/tags/series/" style="font-size: 10px;">series</a> <a href="/blog/tags/strings/" style="font-size: 11.43px;">strings</a> <a href="/blog/tags/ubuntu/" style="font-size: 10px;">ubuntu</a> <a href="/blog/tags/ubuntu-20-04/" style="font-size: 10px;">ubuntu-20.04</a> <a href="/blog/tags/vscode/" style="font-size: 10px;">vscode</a> <a href="/blog/tags/wasi/" style="font-size: 11.43px;">wasi</a> <a href="/blog/tags/wasi-sdk/" style="font-size: 14.29px;">wasi-sdk</a> <a href="/blog/tags/wasm/" style="font-size: 18.57px;">wasm</a> <a href="/blog/tags/wasm-libc/" style="font-size: 12.86px;">wasm-libc</a>
+      <a href="/blog/tags/7610/" style="font-size: 10px;">7610</a> <a href="/blog/tags/C/" style="font-size: 17.5px;">C</a> <a href="/blog/tags/DataFrame/" style="font-size: 12.5px;">DataFrame</a> <a href="/blog/tags/FinalizationRegistry/" style="font-size: 11.25px;">FinalizationRegistry</a> <a href="/blog/tags/JavaScript/" style="font-size: 18.75px;">JavaScript</a> <a href="/blog/tags/WebAssembly/" style="font-size: 20px;">WebAssembly</a> <a href="/blog/tags/array/" style="font-size: 13.75px;">array</a> <a href="/blog/tags/arrays/" style="font-size: 13.75px;">arrays</a> <a href="/blog/tags/clang/" style="font-size: 16.25px;">clang</a> <a href="/blog/tags/cross-compile/" style="font-size: 11.25px;">cross-compile</a> <a href="/blog/tags/data/" style="font-size: 11.25px;">data</a> <a href="/blog/tags/dataframe/" style="font-size: 11.25px;">dataframe</a> <a href="/blog/tags/datascience/" style="font-size: 10px;">datascience</a> <a href="/blog/tags/dell/" style="font-size: 10px;">dell</a> <a href="/blog/tags/finalizer/" style="font-size: 11.25px;">finalizer</a> <a href="/blog/tags/inspiron/" style="font-size: 10px;">inspiron</a> <a href="/blog/tags/libc/" style="font-size: 12.5px;">libc</a> <a href="/blog/tags/linux/" style="font-size: 10px;">linux</a> <a href="/blog/tags/llvm/" style="font-size: 10px;">llvm</a> <a href="/blog/tags/malloc/" style="font-size: 10px;">malloc</a> <a href="/blog/tags/marshalling/" style="font-size: 12.5px;">marshalling</a> <a href="/blog/tags/memory/" style="font-size: 10px;">memory</a> <a href="/blog/tags/science/" style="font-size: 11.25px;">science</a> <a href="/blog/tags/series/" style="font-size: 10px;">series</a> <a href="/blog/tags/strings/" style="font-size: 11.25px;">strings</a> <a href="/blog/tags/ubuntu/" style="font-size: 10px;">ubuntu</a> <a href="/blog/tags/ubuntu-20-04/" style="font-size: 10px;">ubuntu-20.04</a> <a href="/blog/tags/vscode/" style="font-size: 10px;">vscode</a> <a href="/blog/tags/wasi/" style="font-size: 11.25px;">wasi</a> <a href="/blog/tags/wasi-sdk/" style="font-size: 15px;">wasi-sdk</a> <a href="/blog/tags/wasm/" style="font-size: 18.75px;">wasm</a> <a href="/blog/tags/wasm-libc/" style="font-size: 12.5px;">wasm-libc</a>
     </div>
   </div>
 
@@ -562,7 +635,7 @@
   <div class="widget-wrap">
     <h3 class="widget-title">Archives</h3>
     <div class="widget">
-      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2021/12/">December 2021</a></li><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2021/07/">July 2021</a></li><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2020/07/">July 2020</a></li><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2020/06/">June 2020</a></li></ul>
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2024/01/">January 2024</a></li><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2021/12/">December 2021</a></li><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2021/07/">July 2021</a></li><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2020/07/">July 2020</a></li><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2020/06/">June 2020</a></li></ul>
     </div>
   </div>
 
@@ -573,6 +646,10 @@
     <h3 class="widget-title">Recent Posts</h3>
     <div class="widget">
       <ul>
+        
+          <li>
+            <a href="/blog/2024/01/24/wasm-gsl/">Revisiting WebAssembly Cross Compilation in January 2024</a>
+          </li>
         
           <li>
             <a href="/blog/2021/12/19/dell-inspiron-7610-linux/">Setting up a Dell Inspiron 16 Plus (7610) for Linux</a>
@@ -588,10 +665,6 @@
         
           <li>
             <a href="/blog/2020/07/07/wasi-finalizers-1/">WASI Marshalling with Finalizers</a>
-          </li>
-        
-          <li>
-            <a href="/blog/2020/07/02/wasi-marshalling/">WASI Marshalling</a>
           </li>
         
       </ul>

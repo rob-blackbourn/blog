@@ -79,6 +79,75 @@
       <div class="outer">
         <section id="main">
   
+    <article id="post-wasm-gsl" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  <div class="article-meta">
+    <a href="/blog/2024/01/24/wasm-gsl/" class="article-date">
+  <time class="dt-published" datetime="2024-01-24T12:20:00.000Z" itemprop="datePublished">2024-01-24</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/blog/categories/WebAssembly/">WebAssembly</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="p-name article-title" href="/blog/2024/01/24/wasm-gsl/">Revisiting WebAssembly Cross Compilation in January 2024</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="e-content article-entry" itemprop="articleBody">
+      
+        <p>I was recently contacted by someone trying to follow a<br><a href="https://rob-blackbourn.github.io/blog/2020/06/24/wasm-gsl/">previous blog</a><br>on cross compiling C to WebAssembly. Things weren’t working; it seemed that things had changed.</p>
+<p>This is a short post to look at how to cross compile an open source library to WebAssembly<br>using the current tooling (as of 2024-01-07).</p>
+<p>As before I’ll use the <a target="_blank" rel="noopener" href="https://www.gnu.org/software/gsl">GNU Scientific Library</a>,<br>which (at the time of writing) is version 2.7.1.</p>
+<h2 id="The-toolchain"><a href="#The-toolchain" class="headerlink" title="The toolchain"></a>The toolchain</h2><p>As before I used the clang toolchain from <a target="_blank" rel="noopener" href="https://github.com/WebAssembly/wasi-sdk">wasi-sdk</a>.<br>I downloaded <a target="_blank" rel="noopener" href="https://github.com/WebAssembly/wasi-sdk/releases/download/wasi-sdk-21/wasi-sdk-21.0-linux.tar.gz">wasi-sdk-21.0-linux.tar.gz</a><br>and unpacked it to <code>$HOME/local/wasi-sdk-21.0</code>.</p>
+<p>I put the following shell script in the root folder of the GSL.</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line">WASI_SDK_HOME=<span class="variable">$HOME</span>/local/wasi-sdk-21.0</span><br><span class="line"></span><br><span class="line"><span class="built_in">export</span> PATH=<span class="variable">$WASI_SDK_HOME</span>/bin:<span class="variable">$PATH</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># Copy the wasm aware config files.</span></span><br><span class="line"><span class="built_in">cp</span> <span class="variable">$WASI_SDK_HOME</span>/share/misc/config.* .</span><br><span class="line"></span><br><span class="line"><span class="built_in">rm</span> -rf ./build</span><br><span class="line"><span class="built_in">mkdir</span> build</span><br><span class="line"><span class="built_in">cd</span> build</span><br><span class="line"></span><br><span class="line">CC=clang \</span><br><span class="line">CFLAGS=<span class="string">&quot;-fno-trapping-math --sysroot=<span class="variable">$WASI_SDK_HOME</span>/share/wasi-sysroot -mthread-model single&quot;</span> \</span><br><span class="line">CPP=clang-cpp \</span><br><span class="line">AR=llvm-ar \</span><br><span class="line">RANLIB=llvm-ranlib \</span><br><span class="line">NM=llvm-nm \</span><br><span class="line">LD=wasm-ld \</span><br><span class="line">../configure \</span><br><span class="line">    --prefix=<span class="variable">$HOME</span>/local/gsl-2.7 \</span><br><span class="line">    --host=wasm32-wasi \</span><br><span class="line">    --enable-shared=no</span><br><span class="line"></span><br><span class="line"><span class="comment"># build and install it.</span></span><br><span class="line">make</span><br><span class="line">make install</span><br></pre></td></tr></table></figure>
+
+<p>There are three key changes from the previous method.</p>
+<p>First the <code>autoconf</code> config files in the root folder GSL are overwritten by<br>those in the <code>was-sdk</code> with <code>cp $WASI_SDK_HOME/share/misc/config.* .</code>.<br>This provides the information autoconf needs to configure the project for<br>WebAssembly.</p>
+<p>Second the flags to the compiler are now <code>--sysroot=$WASI_SDK_HOME/share/wasi-sysroot</code>,<br>rather than the previous <code>--target=wasm32-wasi</code>.</p>
+<p>Lastly <code>make</code> should be called before <code>make install</code> for the project to build correctly.</p>
+<h2 id="Testing"><a href="#Testing" class="headerlink" title="Testing"></a>Testing</h2><p>I used the same example program as before.</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;gsl/gsl_sf_bessel.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="type">int</span> <span class="title function_">main</span> <span class="params">(<span class="type">int</span> argc, <span class="type">char</span>** argv)</span></span><br><span class="line">&#123;</span><br><span class="line">  <span class="type">double</span> x = <span class="number">5.0</span>;</span><br><span class="line">  <span class="type">double</span> y = gsl_sf_bessel_J0 (x);</span><br><span class="line">  <span class="built_in">printf</span> (<span class="string">&quot;J0(%g) = %.18e\n&quot;</span>, x, y);</span><br><span class="line">  <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>The following script was used to compile it.</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">set</span> -x</span><br><span class="line"></span><br><span class="line">WASI_SDK_HOME=<span class="variable">$HOME</span>/local/wasi-sdk-21.0</span><br><span class="line">GSL_HOME=<span class="variable">$HOME</span>/local/gsl-2.7</span><br><span class="line"></span><br><span class="line"><span class="built_in">export</span> PATH=<span class="variable">$WASI_SDK_HOME</span>/bin:<span class="variable">$PATH</span></span><br><span class="line"></span><br><span class="line">clang \</span><br><span class="line">    example.c -o example \</span><br><span class="line">    -O2 --sysroot=<span class="variable">$WASI_SDK_HOME</span>/share/wasi-sysroot \</span><br><span class="line">    -I<span class="variable">$GSL_HOME</span>/include -L<span class="variable">$GSL_HOME</span>/lib -lgsl -lm -lc</span><br></pre></td></tr></table></figure>
+
+<p>The executable was indeed WebAssembly.</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ file example</span><br><span class="line">example: WebAssembly (wasm) binary module version 0x1 (MVP)</span><br></pre></td></tr></table></figure>
+
+<p>As before we can test it with <a target="_blank" rel="noopener" href="https://github.com/wasmerio/wasmer">wasmer</a>,<br>using <a target="_blank" rel="noopener" href="https://github.com/wasmerio/wasmer/releases/download/v4.2.5/wasmer-linux-amd64.tar.gz">wasmer-linux-amd64.tar.gz</a>.<br>version 4.2.5, and unpacked it to <code>$HOME/local/wasmer-4.2.5</code>.</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ <span class="variable">$HOME</span>/local/wasmer-4.2.5/bin/wasmer example </span><br><span class="line">J0(5) = -1.775967713143382642e-01</span><br></pre></td></tr></table></figure>
+
+<p>Success!</p>
+<h2 id="Thoughts"><a href="#Thoughts" class="headerlink" title="Thoughts"></a>Thoughts</h2><p>It was worth the effort re-visiting this. I think my original<br>post was incomplete (I suspect I had copied the config files<br>in the previous attempt and forgotten), but also there were<br>some real changes.</p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="https://rob-blackbourn.github.io/blog/2024/01/24/wasm-gsl/" data-id="clr3icj9p000vk2ft2b3sath6" data-title="Revisiting WebAssembly Cross Compilation in January 2024" class="article-share-link"><span class="fa fa-share">Share</span></a>
+      
+      
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/blog/tags/C/" rel="tag">C</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/blog/tags/WebAssembly/" rel="tag">WebAssembly</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/blog/tags/clang/" rel="tag">clang</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/blog/tags/cross-compile/" rel="tag">cross-compile</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/blog/tags/wasi-sdk/" rel="tag">wasi-sdk</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/blog/tags/wasm/" rel="tag">wasm</a></li></ul>
+
+    </footer>
+  </div>
+  
+</article>
+
+
+
+  
     <article id="post-dell-inspiron-7610-linux" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
   <div class="article-meta">
     <a href="/blog/2021/12/19/dell-inspiron-7610-linux/" class="article-date">
@@ -167,7 +236,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://rob-blackbourn.github.io/blog/2021/12/19/dell-inspiron-7610-linux/" data-id="clr3cct9v000s7kftcv9w6ago" data-title="Setting up a Dell Inspiron 16 Plus (7610) for Linux" class="article-share-link"><span class="fa fa-share">Share</span></a>
+      <a data-url="https://rob-blackbourn.github.io/blog/2021/12/19/dell-inspiron-7610-linux/" data-id="clr3icj9o000rk2ft4yil4dfr" data-title="Setting up a Dell Inspiron 16 Plus (7610) for Linux" class="article-share-link"><span class="fa fa-share">Share</span></a>
       
       
       
@@ -244,7 +313,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://rob-blackbourn.github.io/blog/2021/07/04/howto-llvm-vscode-ubuntu/" data-id="clr3cct9v000q7kft2jsectfc" data-title="How To Use clang With vscode On Ubuntu 20.04" class="article-share-link"><span class="fa fa-share">Share</span></a>
+      <a data-url="https://rob-blackbourn.github.io/blog/2021/07/04/howto-llvm-vscode-ubuntu/" data-id="clr3icj9n000pk2ft898a0szz" data-title="How To Use clang With vscode On Ubuntu 20.04" class="article-share-link"><span class="fa fa-share">Share</span></a>
       
       
       
@@ -286,14 +355,14 @@
       
         <h2 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h2><p>In my previous posts on data frames we looked at how to:</p>
 <ul>
-<li><a href="https://rob-blackbourn.github.io/blog/javascript/webassembly/dataframe/2020/06/10/example-js-dataframe.html">Create an expressive syntax using operator overloading and proxies</a></li>
-<li><a href="https://rob-blackbourn.github.io/blog/webassembly/wasm/array/arrays/javascript/c/dataframe/2020/06/13/wasm-dataframes.html">Use WebAssembly for efficient array calculations</a></li>
-<li><a href="https://rob-blackbourn.github.io/blog/webassembly/wasm/array/arrays/javascript/c/dataframe/libc/wasm-libc/clang/2020/06/14/wasm-dataframe-libc.html">Use libc with WebAssembly</a></li>
+<li><a href="https://rob-blackbourn.github.io/blog/2020/06/10/example-js-dataframe/">Create an expressive syntax using operator overloading and proxies</a></li>
+<li><a href="https://rob-blackbourn.github.io/blog/2020/06/13/wasm-dataframes/">Use WebAssembly for efficient array calculations</a></li>
+<li><a href="https://rob-blackbourn.github.io/blog/2020/06/14/wasm-dataframe-libc/">Use libc with WebAssembly</a></li>
 </ul>
 <p>The main problem with that implementation was the marshalling layer which was<br>hand written. It required all arrays to be copied in and out of the WebAssembly<br>instance, with manual allocation and freeing of memory.</p>
 <p>This implementation introduces a marshalling layer which makes use of the<br><a target="_blank" rel="noopener" href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/FinalizationRegistry">FinzalizationRegistry</a><br>which provides a callback for managing the destruction of objects.</p>
 <p>You can find the source code <a target="_blank" rel="noopener" href="https://github.com/rob-blackbourn/example-wasm-dataframe-3">here</a>. To run the examples you will need a version of<br>node which supports the <code>--harmony-weak-refs</code> flag (I’m using 14.5.0), the<br><a target="_blank" rel="noopener" href="https://github.com/WebAssembly/wasi-sdk">wasi-sdk 11</a><br>(with it’s bin directory on your path) and the<br><a target="_blank" rel="noopener" href="https://github.com/WebAssembly/wabt">wabt 1.0.16</a><br>toolkit (with it’s bin directory on your path).</p>
-<h2 id="Usage"><a href="#Usage" class="headerlink" title="Usage"></a>Usage</h2><p>You can find more information about the implementation of the marshalling layer in<br><a href="https://rob-blackbourn.github.io/blog/webassembly/wasm/wasi/javascript/c/clang/wasi-sdk/marshalling/finalizer/finalizationregistry/2020/07/07/wasi-finalizers-1.html">this post</a>.<br>What I want to talk about here is <em>usability</em>.</p>
+<h2 id="Usage"><a href="#Usage" class="headerlink" title="Usage"></a>Usage</h2><p>You can find more information about the implementation of the marshalling layer in<br><a href="https://rob-blackbourn.github.io/blog/2020/07/07/wasi-finalizers-1/">this post</a>.<br>What I want to talk about here is <em>usability</em>.</p>
 <p>Rather than bundle a fixed set of functions with the data frame I wanted it to be a structural object where the functions are<br>provided by an extensible repository. This way the user<br>isn’t limited to the operations defined by the data frame implementation.</p>
 <p>A <code>C</code> function for multiplying two arrays might be written as follows -</p>
 <figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">__attribute__((used)) <span class="type">double</span>* <span class="title function_">divideFloat64Arrays</span> <span class="params">(<span class="type">double</span>* array1, <span class="type">double</span>* array2, <span class="type">unsigned</span> <span class="type">int</span> length)</span></span><br><span class="line">&#123;</span><br><span class="line">  <span class="type">double</span>* result = (<span class="type">double</span>*) <span class="built_in">malloc</span>(length * <span class="keyword">sizeof</span>(<span class="type">double</span>));</span><br><span class="line">  <span class="keyword">if</span> (result == <span class="number">0</span>)</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; length; ++i) &#123;</span><br><span class="line">    result[i] = array1[i] + array2[i];</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">return</span> result;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
@@ -322,7 +391,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://rob-blackbourn.github.io/blog/2020/07/15/wasm-dataframes-finalizers/" data-id="clr3cct9s000l7kft6jwqcjqf" data-title="Using Typed Arrays and Finalizers with a WebAssembly DataFrame" class="article-share-link"><span class="fa fa-share">Share</span></a>
+      <a data-url="https://rob-blackbourn.github.io/blog/2020/07/15/wasm-dataframes-finalizers/" data-id="clr3icj9m000nk2ft9u3chqpu" data-title="Using Typed Arrays and Finalizers with a WebAssembly DataFrame" class="article-share-link"><span class="fa fa-share">Share</span></a>
       
       
       
@@ -362,7 +431,7 @@
     
     <div class="e-content article-entry" itemprop="articleBody">
       
-        <p>In my<br><a href="https://rob-blackbourn.github.io/blog/webassembly/wasm/javascript/c/clang/wasi-sdk/marshalling/2020/07/02/wasi-marshalling.html">previous post</a><br>I described a marshalling library I’d written for WebAssembly (see<br><a target="_blank" rel="noopener" href="https://github.com/rob-blackbourn/jetblack-wasi-marshalling">here</a> for the source). There’s one<br>problem I have with it; too much copying!</p>
+        <p>In my<br><a href="https://rob-blackbourn.github.io/blog/2020/07/02/wasi-marshalling/">previous post</a><br>I described a marshalling library I’d written for WebAssembly (see<br><a target="_blank" rel="noopener" href="https://github.com/rob-blackbourn/jetblack-wasi-marshalling">here</a> for the source). There’s one<br>problem I have with it; too much copying!</p>
 <p>But there’s a good reason for the copying. In order to ensure all allocated memory<br>is freed, the marshaller goes through three steps: allocating memory and<br>copying data, calling the function, then copying results and freeing the memory.<br>Without this control memory will leak.</p>
 <p>Enter finalizers …</p>
 <h2 id="FinalizationRegistry"><a href="#FinalizationRegistry" class="headerlink" title="FinalizationRegistry"></a>FinalizationRegistry</h2><p>Until recently there has been no way to hook into the end of a JavaScript<br>object’s lifecycle. There is a “stage 3” proposal that is going into production:<br><a target="_blank" rel="noopener" href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/FinalizationRegistry">FinalizationRegistry</a>.<br>This is currently avaliable in node (since 13.0.0), but must be enabled with the<br>flag “–harmony-weak-refs”.<br>It should be available in chrome (84), and firefox (79) in a few days.</p>
@@ -390,7 +459,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://rob-blackbourn.github.io/blog/2020/07/07/wasi-finalizers-1/" data-id="clr3cct9r000j7kft5ycm7ycw" data-title="WASI Marshalling with Finalizers" class="article-share-link"><span class="fa fa-share">Share</span></a>
+      <a data-url="https://rob-blackbourn.github.io/blog/2020/07/07/wasi-finalizers-1/" data-id="clr3icj9l000kk2ft1ewx0kke" data-title="WASI Marshalling with Finalizers" class="article-share-link"><span class="fa fa-share">Share</span></a>
       
       
       
@@ -492,7 +561,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://rob-blackbourn.github.io/blog/2020/07/02/wasi-marshalling/" data-id="clr3cct9u000o7kft3gyl0ol7" data-title="WASI Marshalling" class="article-share-link"><span class="fa fa-share">Share</span></a>
+      <a data-url="https://rob-blackbourn.github.io/blog/2020/07/02/wasi-marshalling/" data-id="clr3icj9j000fk2fta36e4epo" data-title="WASI Marshalling" class="article-share-link"><span class="fa fa-share">Share</span></a>
       
       
       
@@ -533,13 +602,13 @@
     <div class="e-content article-entry" itemprop="articleBody">
       
         <p>In this post I’ll explore how to use an existing C library in a JavaScript with WebAssembly.</p>
-<p>This uses information from previous posts for<br><a href="https://rob-blackbourn.github.io/blog/webassembly/wasm/array/arrays/javascript/c/dataframe/libc/wasm-libc/clang/2020/06/14/wasm-dataframe-libc.html">dataframes</a>,<br>and<br><a href="https://rob-blackbourn.github.io/blog/webassembly/wasm/strings/javascript/c/libc/wasm-libc/clang/2020/06/20/wasm-stdout-stderr.html">wasi</a>.</p>
+<p>This uses information from previous posts for<br><a href="https://rob-blackbourn.github.io/blog/2020/06/14/wasm-dataframe-libc/">dataframes</a>,<br>and<br><a href="https://rob-blackbourn.github.io/blog/2020/06/20/wasm-stdout-stderr/">wasi</a>.</p>
 <p>You can find the source code<br><a target="_blank" rel="noopener" href="https://github.com/rob-blackbourn/example-wasm-gsl">here</a>.</p>
 <h2 id="The-Toolchain"><a href="#The-Toolchain" class="headerlink" title="The Toolchain"></a>The Toolchain</h2><p>In this example I used the ready made clang toolchain from<br><a target="_blank" rel="noopener" href="https://github.com/WebAssembly/wasi-sdk">wasi-sdk</a>. I downloaded<br><a target="_blank" rel="noopener" href="https://github.com/WebAssembly/wasi-sdk/releases/download/wasi-sdk-11/wasi-sdk-11.0-linux.tar.gz">wasi-sdk-11.0-linux.tar.gz</a><br>and unpacked it in <code>/opt/wasi-sdk</code> as follows.</p>
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">cd</span> /tmp</span><br><span class="line">wget https://github.com/WebAssembly/wasi-sdk/releases/download/wasi-sdk-11/wasi-sdk-11.0-linux.tar.gz</span><br><span class="line"><span class="built_in">cd</span> /opt</span><br><span class="line">sudo tar xvf /tmp/wasi-sdk-11.0-linux.tar.gz</span><br><span class="line">sudo <span class="built_in">ln</span> -s wasi-sdk-11.0 wasi-sdk</span><br><span class="line"><span class="built_in">rm</span> /tmp/wasi-sdk-11.0-linux.tar.gz</span><br></pre></td></tr></table></figure>
 
 <p>I also installed <a target="_blank" rel="noopener" href="https://github.com/WebAssembly/wabt">wabt 1.0.16</a>, and<br><a target="_blank" rel="noopener" href="https://github.com/wasmerio/wasmer">wasmer</a>, and unpacked them in &#x2F;opt. I then<br>put the <code>bin</code> directories from all on my path.</p>
-<h2 id="Cross-Compiling"><a href="#Cross-Compiling" class="headerlink" title="Cross Compiling"></a>Cross Compiling</h2><p>I decided to use the<br><a target="_blank" rel="noopener" href="https://www.gnu.org/software/gsl">GNU Scientific Library</a><br>as it is written in plain old C, and I can use it to further the<br><a href="https://rob-blackbourn.github.io/blog/webassembly/wasm/array/arrays/javascript/c/dataframe/libc/wasm-libc/clang/2020/06/14/wasm-dataframe-libc.html">dataframes</a><br>project I have discuessed in previous posts.</p>
+<h2 id="Cross-Compiling"><a href="#Cross-Compiling" class="headerlink" title="Cross Compiling"></a>Cross Compiling</h2><p>I decided to use the<br><a target="_blank" rel="noopener" href="https://www.gnu.org/software/gsl">GNU Scientific Library</a><br>as it is written in plain old C, and I can use it to further the<br><a href="https://rob-blackbourn.github.io/blog/2020/06/14/wasm-dataframe-libc/">dataframes</a><br>project I have discuessed in previous posts.</p>
 <p>Compiling it proved to be remarkedly straightforward. After downloading and<br>unpacking the tarball I did the following.</p>
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># Ensure wasi-sdk is on the path</span></span><br><span class="line"><span class="built_in">export</span> PATH=/opt/wasi-sdk/bin:<span class="variable">$PATH</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># Go to the project folder and make a build folder.</span></span><br><span class="line"><span class="built_in">cd</span> gsl-2.6</span><br><span class="line"><span class="built_in">mkdir</span> build</span><br><span class="line"><span class="built_in">cd</span> build</span><br><span class="line"></span><br><span class="line"><span class="comment"># Configure the project setting the clang toolchain</span></span><br><span class="line">CC=clang \</span><br><span class="line">CFLAGS=<span class="string">&quot;-fno-trapping-math --target=wasm32-wasi -mthread-model single&quot;</span> \</span><br><span class="line">CPP=clang-cpp \</span><br><span class="line">AR=llvm-ar \</span><br><span class="line">RANLIB=llvm-ranlib \</span><br><span class="line">NM=llvm-nm \</span><br><span class="line">LD=wasm-ld \</span><br><span class="line">../configure \</span><br><span class="line">    --prefix=/opt/gsl-2.6 \</span><br><span class="line">    --host=wasm32-wasi \</span><br><span class="line">    --enable-shared=no</span><br><span class="line"></span><br><span class="line"><span class="comment"># build and install it (you need to have premissions to /opt/gsl-2.6)</span></span><br><span class="line">make install</span><br></pre></td></tr></table></figure>
 
@@ -588,7 +657,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://rob-blackbourn.github.io/blog/2020/06/24/wasm-gsl/" data-id="clr3cct9q000g7kft5jjiba2o" data-title="How to Cross Compile a C library to WebAssembly for use with JavaScript" class="article-share-link"><span class="fa fa-share">Share</span></a>
+      <a data-url="https://rob-blackbourn.github.io/blog/2020/06/24/wasm-gsl/" data-id="clr3icj9h000ak2ftd4rc5dfg" data-title="How to Cross Compile a C library to WebAssembly for use with JavaScript" class="article-share-link"><span class="fa fa-share">Share</span></a>
       
       
       
@@ -628,7 +697,7 @@
     
     <div class="e-content article-entry" itemprop="articleBody">
       
-        <p>In my<br><a href="https://rob-blackbourn.github.io/blog/webassembly/wasm/strings/javascript/c/libc/wasm-libc/clang/2020/06/20/wasm-string-passing.html">previous post</a><br>I found out how to pass strings between JavaScript and WebAssembly. The problem<br>with that solution was that I had to export <code>console.log</code> to the WebAssembly<br>module. At some point I want to be able to take some library source code “off<br>the shelf”, compile and use it without modification.<br>Sadly many libraries will use <code>stdin</code>&#x2F;<code>stdout</code><br>with <code>printf</code>, <code>puts</code>, or <code>perror</code>.</p>
+        <p>In my<br><a href="https://rob-blackbourn.github.io/blog/2020/06/20/wasm-string-passing/">previous post</a><br>I found out how to pass strings between JavaScript and WebAssembly. The problem<br>with that solution was that I had to export <code>console.log</code> to the WebAssembly<br>module. At some point I want to be able to take some library source code “off<br>the shelf”, compile and use it without modification.<br>Sadly many libraries will use <code>stdin</code>&#x2F;<code>stdout</code><br>with <code>printf</code>, <code>puts</code>, or <code>perror</code>.</p>
 <p>This is going to mean more work at the WASI layer!</p>
 <p>You can find the source code for this post<br><a target="_blank" rel="noopener" href="https://github.com/rob-blackbourn/example-wasm-stdout-stderr">here</a>.</p>
 <h2 id="The-Problem"><a href="#The-Problem" class="headerlink" title="The Problem"></a>The Problem</h2><p>If a program issues a call like <code>printf</code> it’s often sending its output to the<br>terminal, or possibly to a file. In any case this is certainly escaping the<br>WebAssembly sandbox. The<br><a target="_blank" rel="noopener" href="https://github.com/WebAssembly/wasi-libc">wasm-libc</a><br>library was built with the expectation of a WASI implementation. We can use this<br>to handle enough <code>stdio</code> to suit our needs.</p>
@@ -652,7 +721,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://rob-blackbourn.github.io/blog/2020/06/20/wasm-stdout-stderr/" data-id="clr3cct9n00097kftef866dvw" data-title="Handling Stdout/Stderr with JavaScript and WebAssembly" class="article-share-link"><span class="fa fa-share">Share</span></a>
+      <a data-url="https://rob-blackbourn.github.io/blog/2020/06/20/wasm-stdout-stderr/" data-id="clr3icj9f0008k2ft3pik8nrz" data-title="Handling Stdout/Stderr with JavaScript and WebAssembly" class="article-share-link"><span class="fa fa-share">Share</span></a>
       
       
       
@@ -692,7 +761,7 @@
     
     <div class="e-content article-entry" itemprop="articleBody">
       
-        <p>In my<br><a href="https://rob-blackbourn.github.io/blog/webassembly/wasm/array/arrays/javascript/c/2020/06/07/wasm-arrays.html">first post</a><br>on WebAssembly I dodged the classic “Hello, World!” example as I thought it might<br>be a bit tricky. Little did I realise how hard it was going to be!</p>
+        <p>In my<br><a href="https://rob-blackbourn.github.io/blog/2020/06/07/wasm-arrays/">first post</a><br>on WebAssembly I dodged the classic “Hello, World!” example as I thought it might<br>be a bit tricky. Little did I realise how hard it was going to be!</p>
 <p>In this post I’m going to look at how to solve it. The code for the project<br>can be found <a target="_blank" rel="noopener" href="https://github.com/rob-blackbourn/example-wasm-string-passing">here</a>.</p>
 <h2 id="The-Problem"><a href="#The-Problem" class="headerlink" title="The Problem"></a>The Problem</h2><p>In JavaScript strings are encoded with utf-8. This format encodes characters<br>that cannot be represented in the ascii character set with more than one byte.</p>
 <h2 id="The-JavaScript-Side"><a href="#The-JavaScript-Side" class="headerlink" title="The JavaScript Side"></a>The JavaScript Side</h2><p>On the JavaScript side we can use<br><a target="_blank" rel="noopener" href="https://developer.mozilla.org/en-US/docs/Web/API/TextEncoder">TextEncoder</a> and<br><a target="_blank" rel="noopener" href="https://developer.mozilla.org/en-US/docs/Web/API/TextDecoder/TextDecoder">TextDecoder</a><br>in the following manner.</p>
@@ -726,7 +795,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://rob-blackbourn.github.io/blog/2020/06/20/wasm-string-passing/" data-id="clr3cct9o000a7kftbfzafvxo" data-title="How to Pass Strings Between JavaScript and WebAssembly" class="article-share-link"><span class="fa fa-share">Share</span></a>
+      <a data-url="https://rob-blackbourn.github.io/blog/2020/06/20/wasm-string-passing/" data-id="clr3icj9k000ik2ftgfzjhxh8" data-title="How to Pass Strings Between JavaScript and WebAssembly" class="article-share-link"><span class="fa fa-share">Share</span></a>
       
       
       
@@ -767,7 +836,7 @@
     <div class="e-content article-entry" itemprop="articleBody">
       
         <h1 id="Using-libc-with-WebAssembly-enabled-DataFrames"><a href="#Using-libc-with-WebAssembly-enabled-DataFrames" class="headerlink" title="Using libc with WebAssembly enabled DataFrames"></a>Using libc with WebAssembly enabled DataFrames</h1><p>This post describes how to use the C standard library with WebAssembly enabled<br>DataFrames. You can find the source code<br><a target="_blank" rel="noopener" href="https://github.com/rob-blackbourn/example-wasm-dataframe-2">here</a>.</p>
-<h2 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h2><p>In my previous<br><a href="https://rob-blackbourn.github.io/blog/webassembly/wasm/array/arrays/javascript/c/dataframe/2020/06/13/wasm-dataframes.html">post</a><br>I avoided solving the problem of linking to standard<br>library to provide memory allocation for my WebAssembly project by writing my<br>own memory allocator. In order to use external C packages I will need a<br>standard library.</p>
+<h2 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h2><p>In my previous<br><a href="https://rob-blackbourn.github.io/blog/2020/06/13/wasm-dataframes/">post</a><br>I avoided solving the problem of linking to standard<br>library to provide memory allocation for my WebAssembly project by writing my<br>own memory allocator. In order to use external C packages I will need a<br>standard library.</p>
 <h2 id="wsi-libc"><a href="#wsi-libc" class="headerlink" title="wsi-libc"></a>wsi-libc</h2><p>The <a target="_blank" rel="noopener" href="https://github.com/WebAssembly/wasi-libc">wasi-libc</a> project does what it<br>says on the tin by providing a standard library for wasm.</p>
 <p>I have changed my setup as my laptop required reinstallation. I’m now running<br>Ubuntu 20.04 LTS.</p>
 <p>I installed the latest (version 10) LLVM tool chain as a Debian package which<br>I got from <a target="_blank" rel="noopener" href="https://apt.llvm.org/">this page</a>. I did the following.</p>
@@ -795,84 +864,11 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://rob-blackbourn.github.io/blog/2020/06/14/wasm-dataframe-libc/" data-id="clr3cct9j00057kftf2365xb5" data-title="Using libc with WebAssembly enabled DataFrames" class="article-share-link"><span class="fa fa-share">Share</span></a>
+      <a data-url="https://rob-blackbourn.github.io/blog/2020/06/14/wasm-dataframe-libc/" data-id="clr3icj9e0006k2ft61omelg7" data-title="Using libc with WebAssembly enabled DataFrames" class="article-share-link"><span class="fa fa-share">Share</span></a>
       
       
       
   <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/blog/tags/C/" rel="tag">C</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/blog/tags/DataFrame/" rel="tag">DataFrame</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/blog/tags/JavaScript/" rel="tag">JavaScript</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/blog/tags/WebAssembly/" rel="tag">WebAssembly</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/blog/tags/array/" rel="tag">array</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/blog/tags/arrays/" rel="tag">arrays</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/blog/tags/clang/" rel="tag">clang</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/blog/tags/libc/" rel="tag">libc</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/blog/tags/wasm/" rel="tag">wasm</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/blog/tags/wasm-libc/" rel="tag">wasm-libc</a></li></ul>
-
-    </footer>
-  </div>
-  
-</article>
-
-
-
-  
-    <article id="post-datascience-javascript" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
-  <div class="article-meta">
-    <a href="/blog/2020/06/13/datascience-javascript/" class="article-date">
-  <time class="dt-published" datetime="2020-06-13T13:57:00.000Z" itemprop="datePublished">2020-06-13</time>
-</a>
-    
-  <div class="article-category">
-    <a class="article-category-link" href="/blog/categories/WebAssembly/">WebAssembly</a>
-  </div>
-
-  </div>
-  <div class="article-inner">
-    
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="p-name article-title" href="/blog/2020/06/13/datascience-javascript/">The future of Data Science is JavaScript and WebAssembly</a>
-    </h1>
-  
-
-      </header>
-    
-    <div class="e-content article-entry" itemprop="articleBody">
-      
-        <p>In my previous posts<br><a href="https://rob-blackbourn.github.io/blog/webassembly/wasm/array/arrays/javascript/c/2020/06/07/wasm-arrays.html">[1]</a><br><a href="https://rob-blackbourn.github.io/blog/javascript/webassembly/clang/wasm/memory/malloc/2020/06/10/simplifyinf-memory-management.html">[2]</a><br><a href="https://rob-blackbourn.github.io/blog/javascript/webassembly/dataframe/2020/06/10/example-js-dataframe.html">[3]</a><br><a href="https://rob-blackbourn.github.io/blog/webassembly/wasm/array/arrays/javascript/c/dataframe/2020/06/13/wasm-dataframes.html">[4]</a><br>I demonstrated how to write a simple <a target="_blank" rel="noopener" href="https://pandas.pydata.org/">pandas</a>-style<br>data frame in JavaScript using <a target="_blank" rel="noopener" href="https://webassembly.org/">WebAssembly</a> (a near<br>native speed virtual machine available in every modern browser or server-side<br>engine such as <a target="_blank" rel="noopener" href="https://nodejs.org/en/">nodejs</a>).<br>This demonstrated the following features:</p>
-<ul>
-<li><p>Elegant Syntax</p>
-<p>Expressions can be written in the following manner.</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> df = <span class="title class_">DataFrame</span>.<span class="title function_">fromObject</span>(</span><br><span class="line">  [</span><br><span class="line">    &#123; <span class="attr">col0</span>: <span class="string">&#x27;a&#x27;</span>, <span class="attr">col1</span>: <span class="number">5</span>, <span class="attr">col2</span>: <span class="number">8.1</span> &#125;,</span><br><span class="line">    &#123; <span class="attr">col0</span>: <span class="string">&#x27;b&#x27;</span>, <span class="attr">col1</span>: <span class="number">6</span>, <span class="attr">col2</span>: <span class="number">3.2</span> &#125;</span><br><span class="line">  ],</span><br><span class="line">  &#123; <span class="attr">col0</span>: <span class="string">&#x27;object&#x27;</span>, <span class="attr">col1</span>: <span class="string">&#x27;int&#x27;</span>, <span class="attr">col2</span>: <span class="string">&#x27;double&#x27;</span>&#125;</span><br><span class="line">)</span><br><span class="line"></span><br><span class="line">df[<span class="string">&#x27;col3&#x27;</span>] = df[<span class="string">&#x27;col1&#x27;</span>] + df[<span class="string">&#x27;col2&#x27;</span>]</span><br></pre></td></tr></table></figure>
-</li>
-<li><p>Near native speed.</p>
-<p>All operations are written in C and are performed in a compiled WebAssembly<br>module.</p>
-</li>
-<li><p>Portable.</p>
-<p>The code runs in <strong>any</strong> browser or server side JavaScript engine (e.g.<br>chrome, nodejs, etc.).</p>
-</li>
-<li><p>Uses standard tooling.</p>
-<p>The C code was compiled with the current standard<br><a target="_blank" rel="noopener" href="https://clang.llvm.org/">clang</a><br>compiler which supports WebAssembly<br><a target="_blank" rel="noopener" href="https://lld.llvm.org/WebAssembly.html">out of the box</a>.</p>
-</li>
-</ul>
-<h2 id="The-Future-of-Data-Science"><a href="#The-Future-of-Data-Science" class="headerlink" title="The Future of Data Science?"></a>The Future of Data Science?</h2><p>Clearly this is a bold claim!</p>
-<p>There are currently two clear platform leaders in the data science eco-system:<br><a target="_blank" rel="noopener" href="https://cran.r-project.org/">R</a>,<br>and <a target="_blank" rel="noopener" href="https://www.python.org/">Python</a><br>using the <a target="_blank" rel="noopener" href="https://www.scipy.org/">scipy</a> toolkit,<br>and also a number of attractive outsiders. The choice of which platform to<br>choose typically depends on language preference, but more compellingly what<br>packages a particular language&#x2F;version provides. It is not unusual for a project<br>to be constrained to a legacy version of a platform simply because a key package<br>has not been ported to a current version.</p>
-<p>So how can JavaScript and WebAssembly help?</p>
-<h3 id="Elegant-Syntax"><a href="#Elegant-Syntax" class="headerlink" title="Elegant Syntax"></a>Elegant Syntax</h3><p>Surprisingly, yes! The posts referenced above clearly demonstrate how JavaScript<br>can be written in a manner which elegantly represents vector-arithmetic.</p>
-<h3 id="Speed"><a href="#Speed" class="headerlink" title="Speed"></a>Speed</h3><p>With WebAssembly there is no significant compromise in speed over natively<br>compiled languages.</p>
-<h3 id="Bindings"><a href="#Bindings" class="headerlink" title="Bindings"></a>Bindings</h3><p>With other languages a <em>binding</em> must be written to integrate a package<br>into the language. In many cases this is <strong>completely</strong> unnecessary for<br>WebAssembly.</p>
-<h3 id="Fortran"><a href="#Fortran" class="headerlink" title="Fortran"></a>Fortran</h3><p>In my opinion this is the killer advantage. There are a huge number of key data<br>science libraries implemented in many different flavours of Fortran. Binding to<br>these libraries is an ongoing and fraught task.</p>
-<p>Happily <a target="_blank" rel="noopener" href="https://llvm.org/">LLVM</a> (a language compiler supported by the majority<br>of operating systems) is currently incorporating<br><a target="_blank" rel="noopener" href="https://github.com/flang-compiler/flang">flang</a><br>(a Fortran compiler) into it’s toolchain, supporting <strong>all</strong> versions of Fortran<br>up to and including 2018. This provides the possibility of compiling <strong>any</strong><br>Fortran package directly to WebAssembly.</p>
-<h2 id="The-Catch"><a href="#The-Catch" class="headerlink" title="The Catch"></a>The Catch</h2><p>The first catch is operator overloading. I’m not sure if “catch” is the right<br>word. My solution using the <a target="_blank" rel="noopener" href="https://babeljs.io/">babel</a> transpiler works fine,<br>and transpiling is how <a target="_blank" rel="noopener" href="https://reactjs.org/">React</a> (one of the most popular web<br>frameworks, which uses custom syntax in JavaScript) does and will always work.<br>There is a <a target="_blank" rel="noopener" href="https://github.com/tc39/proposal-operator-overloading">proposal</a><br>to incorporate operator overloading into JavaScript (currently at stage 1 where<br>3 means acceptance), which leads me to believe it is a feature which my become<br>native to the language.</p>
-<p>The second catch is the standard library. You’ll note if you’ve read the<br>previous posts that I had to provide a memory allocator as this is not available<br>in the WebAssembly environment. WebAssembly is just a virtual machine, and at<br>present it doesn’t come with the usual support code which most libraries depend<br>on. This is all being built out at the present in the form of<br><a target="_blank" rel="noopener" href="https://wasi.dev/">wasi</a>, but it’s not here yet.</p>
-<p>Lastly flang isn’t in the current stable release of LLVM. It was<br><a target="_blank" rel="noopener" href="https://www.youtube.com/watch?v=yenZorebMOA">incorporated in the repo in November 2019</a>,<br>and I would expect it to be in the next major release.</p>
-<h2 id="Do-I-Want-to-Write-in-JavaScript"><a href="#Do-I-Want-to-Write-in-JavaScript" class="headerlink" title="Do I Want to Write in JavaScript?"></a>Do I Want to Write in JavaScript?</h2><p>Personally I don’t care what language I write in, as long as it doesn’t get in<br>the way of the problem I’m trying to solve. Because of the low cost of entry,<br>JavaScript has become ubiquitous, and so it’s level of documentation and support<br>is huge, which I like.</p>
-<p>If it provides seamless access to the packages I need I’m a buyer.</p>
-
-      
-    </div>
-    <footer class="article-footer">
-      <a data-url="https://rob-blackbourn.github.io/blog/2020/06/13/datascience-javascript/" data-id="clr3cct9e00017kftao655nvj" data-title="The future of Data Science is JavaScript and WebAssembly" class="article-share-link"><span class="fa fa-share">Share</span></a>
-      
-      
-      
-  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/blog/tags/C/" rel="tag">C</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/blog/tags/DataFrame/" rel="tag">DataFrame</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/blog/tags/JavaScript/" rel="tag">JavaScript</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/blog/tags/WebAssembly/" rel="tag">WebAssembly</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/blog/tags/array/" rel="tag">array</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/blog/tags/arrays/" rel="tag">arrays</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/blog/tags/data/" rel="tag">data</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/blog/tags/datascience/" rel="tag">datascience</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/blog/tags/science/" rel="tag">science</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/blog/tags/wasm/" rel="tag">wasm</a></li></ul>
 
     </footer>
   </div>
@@ -917,7 +913,7 @@
   <div class="widget-wrap">
     <h3 class="widget-title">Tag Cloud</h3>
     <div class="widget tagcloud">
-      <a href="/blog/tags/7610/" style="font-size: 10px;">7610</a> <a href="/blog/tags/C/" style="font-size: 17.14px;">C</a> <a href="/blog/tags/DataFrame/" style="font-size: 12.86px;">DataFrame</a> <a href="/blog/tags/FinalizationRegistry/" style="font-size: 11.43px;">FinalizationRegistry</a> <a href="/blog/tags/JavaScript/" style="font-size: 20px;">JavaScript</a> <a href="/blog/tags/WebAssembly/" style="font-size: 20px;">WebAssembly</a> <a href="/blog/tags/array/" style="font-size: 14.29px;">array</a> <a href="/blog/tags/arrays/" style="font-size: 14.29px;">arrays</a> <a href="/blog/tags/clang/" style="font-size: 15.71px;">clang</a> <a href="/blog/tags/cross-compile/" style="font-size: 10px;">cross-compile</a> <a href="/blog/tags/data/" style="font-size: 11.43px;">data</a> <a href="/blog/tags/dataframe/" style="font-size: 11.43px;">dataframe</a> <a href="/blog/tags/datascience/" style="font-size: 10px;">datascience</a> <a href="/blog/tags/dell/" style="font-size: 10px;">dell</a> <a href="/blog/tags/finalizer/" style="font-size: 11.43px;">finalizer</a> <a href="/blog/tags/inspiron/" style="font-size: 10px;">inspiron</a> <a href="/blog/tags/libc/" style="font-size: 12.86px;">libc</a> <a href="/blog/tags/linux/" style="font-size: 10px;">linux</a> <a href="/blog/tags/llvm/" style="font-size: 10px;">llvm</a> <a href="/blog/tags/malloc/" style="font-size: 10px;">malloc</a> <a href="/blog/tags/marshalling/" style="font-size: 12.86px;">marshalling</a> <a href="/blog/tags/memory/" style="font-size: 10px;">memory</a> <a href="/blog/tags/science/" style="font-size: 11.43px;">science</a> <a href="/blog/tags/series/" style="font-size: 10px;">series</a> <a href="/blog/tags/strings/" style="font-size: 11.43px;">strings</a> <a href="/blog/tags/ubuntu/" style="font-size: 10px;">ubuntu</a> <a href="/blog/tags/ubuntu-20-04/" style="font-size: 10px;">ubuntu-20.04</a> <a href="/blog/tags/vscode/" style="font-size: 10px;">vscode</a> <a href="/blog/tags/wasi/" style="font-size: 11.43px;">wasi</a> <a href="/blog/tags/wasi-sdk/" style="font-size: 14.29px;">wasi-sdk</a> <a href="/blog/tags/wasm/" style="font-size: 18.57px;">wasm</a> <a href="/blog/tags/wasm-libc/" style="font-size: 12.86px;">wasm-libc</a>
+      <a href="/blog/tags/7610/" style="font-size: 10px;">7610</a> <a href="/blog/tags/C/" style="font-size: 17.5px;">C</a> <a href="/blog/tags/DataFrame/" style="font-size: 12.5px;">DataFrame</a> <a href="/blog/tags/FinalizationRegistry/" style="font-size: 11.25px;">FinalizationRegistry</a> <a href="/blog/tags/JavaScript/" style="font-size: 18.75px;">JavaScript</a> <a href="/blog/tags/WebAssembly/" style="font-size: 20px;">WebAssembly</a> <a href="/blog/tags/array/" style="font-size: 13.75px;">array</a> <a href="/blog/tags/arrays/" style="font-size: 13.75px;">arrays</a> <a href="/blog/tags/clang/" style="font-size: 16.25px;">clang</a> <a href="/blog/tags/cross-compile/" style="font-size: 11.25px;">cross-compile</a> <a href="/blog/tags/data/" style="font-size: 11.25px;">data</a> <a href="/blog/tags/dataframe/" style="font-size: 11.25px;">dataframe</a> <a href="/blog/tags/datascience/" style="font-size: 10px;">datascience</a> <a href="/blog/tags/dell/" style="font-size: 10px;">dell</a> <a href="/blog/tags/finalizer/" style="font-size: 11.25px;">finalizer</a> <a href="/blog/tags/inspiron/" style="font-size: 10px;">inspiron</a> <a href="/blog/tags/libc/" style="font-size: 12.5px;">libc</a> <a href="/blog/tags/linux/" style="font-size: 10px;">linux</a> <a href="/blog/tags/llvm/" style="font-size: 10px;">llvm</a> <a href="/blog/tags/malloc/" style="font-size: 10px;">malloc</a> <a href="/blog/tags/marshalling/" style="font-size: 12.5px;">marshalling</a> <a href="/blog/tags/memory/" style="font-size: 10px;">memory</a> <a href="/blog/tags/science/" style="font-size: 11.25px;">science</a> <a href="/blog/tags/series/" style="font-size: 10px;">series</a> <a href="/blog/tags/strings/" style="font-size: 11.25px;">strings</a> <a href="/blog/tags/ubuntu/" style="font-size: 10px;">ubuntu</a> <a href="/blog/tags/ubuntu-20-04/" style="font-size: 10px;">ubuntu-20.04</a> <a href="/blog/tags/vscode/" style="font-size: 10px;">vscode</a> <a href="/blog/tags/wasi/" style="font-size: 11.25px;">wasi</a> <a href="/blog/tags/wasi-sdk/" style="font-size: 15px;">wasi-sdk</a> <a href="/blog/tags/wasm/" style="font-size: 18.75px;">wasm</a> <a href="/blog/tags/wasm-libc/" style="font-size: 12.5px;">wasm-libc</a>
     </div>
   </div>
 
@@ -926,7 +922,7 @@
   <div class="widget-wrap">
     <h3 class="widget-title">Archives</h3>
     <div class="widget">
-      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2021/12/">December 2021</a></li><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2021/07/">July 2021</a></li><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2020/07/">July 2020</a></li><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2020/06/">June 2020</a></li></ul>
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2024/01/">January 2024</a></li><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2021/12/">December 2021</a></li><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2021/07/">July 2021</a></li><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2020/07/">July 2020</a></li><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2020/06/">June 2020</a></li></ul>
     </div>
   </div>
 
@@ -937,6 +933,10 @@
     <h3 class="widget-title">Recent Posts</h3>
     <div class="widget">
       <ul>
+        
+          <li>
+            <a href="/blog/2024/01/24/wasm-gsl/">Revisiting WebAssembly Cross Compilation in January 2024</a>
+          </li>
         
           <li>
             <a href="/blog/2021/12/19/dell-inspiron-7610-linux/">Setting up a Dell Inspiron 16 Plus (7610) for Linux</a>
@@ -952,10 +952,6 @@
         
           <li>
             <a href="/blog/2020/07/07/wasi-finalizers-1/">WASI Marshalling with Finalizers</a>
-          </li>
-        
-          <li>
-            <a href="/blog/2020/07/02/wasi-marshalling/">WASI Marshalling</a>
           </li>
         
       </ul>
