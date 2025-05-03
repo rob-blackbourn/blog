@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  
+  <title>Setting up a Dell Inspiron 16 Plus (7610) for Linux | Robs Blog</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta name="description" content="IntroductionI recently bought a Dell Inspiron 16 Plus (7610) for use with Linux.There have been a number of issues that have been solved by smart people on the internet.This is a short list of things">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Setting up a Dell Inspiron 16 Plus (7610) for Linux">
+<meta property="og:url" content="https://rob-blackbourn.github.io/blog/2021/12/19/dell-inspiron-7610-linux/index.html">
+<meta property="og:site_name" content="Robs Blog">
+<meta property="og:description" content="IntroductionI recently bought a Dell Inspiron 16 Plus (7610) for use with Linux.There have been a number of issues that have been solved by smart people on the internet.This is a short list of things">
+<meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2021-12-19T07:50:00.000Z">
+<meta property="article:modified_time" content="2025-05-03T11:02:32.757Z">
+<meta property="article:author" content="Rob Blackbourn">
+<meta property="article:tag" content="dell">
+<meta property="article:tag" content="inspiron">
+<meta property="article:tag" content="7610">
+<meta property="article:tag" content="linux">
+<meta name="twitter:card" content="summary">
+  
+    <link rel="alternate" href="/blog/atom.xml" title="Robs Blog" type="application/atom+xml">
+  
+  
+    <link rel="shortcut icon" href="/blog/favicon.png">
+  
+  
+  
+<link rel="stylesheet" href="/blog/css/style.css">
+
+  
+    
+<link rel="stylesheet" href="/blog/fancybox/jquery.fancybox.min.css">
+
+  
+  
+    
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fork-awesome@1.2.0/css/fork-awesome.min.css">
+
+  
+<meta name="generator" content="Hexo 7.0.0"></head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/blog/" id="logo">Robs Blog</a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"><span class="fa fa-bars"></span></a>
+        
+          <a class="main-nav-link" href="/blog/">Home</a>
+        
+          <a class="main-nav-link" href="/blog/archives">Archives</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+          
+            <a class="nav-icon" target="_blank" rel="noopener" href="https://github.com/rob-blackbourn"><span class="fa fa-github"></span></a>
+          
+            <a class="nav-icon" target="_blank" rel="noopener" href="https://www.linkedin.com/in/rob-blackbourn/"><span class="fa fa-linkedin"></span></a>
+          
+        
+        
+          <a class="nav-icon" href="/blog/atom.xml" title="RSS Feed"><span class="fa fa-rss"></span></a>
+        
+        <a class="nav-icon nav-search-btn" title="Search"><span class="fa fa-search"></span></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="https://rob-blackbourn.github.io/blog"></form>
+      </div>
+    </div>
+  </div>
+</header>
+
+      <div class="outer">
+        <section id="main"><article id="post-dell-inspiron-7610-linux" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  <div class="article-meta">
+    <a href="/blog/2021/12/19/dell-inspiron-7610-linux/" class="article-date">
+  <time class="dt-published" datetime="2021-12-19T07:50:00.000Z" itemprop="datePublished">2021-12-19</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/blog/categories/Admin/">Admin</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="p-name article-title" itemprop="headline name">
+      Setting up a Dell Inspiron 16 Plus (7610) for Linux
+    </h1>
+  
+
+      </header>
+    
+    <div class="e-content article-entry" itemprop="articleBody">
+      
+        <h2 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h2><p>I recently bought a Dell Inspiron 16 Plus (7610) for use with Linux.<br>There have been a number of issues that have been solved by smart people on the internet.<br>This is a short list of things that I have done to make things work.</p>
+<p>I used the Ubuntu 21.10 distribution.</p>
+<h2 id="Status"><a href="#Status" class="headerlink" title="Status"></a>Status</h2><p>The trackpad is sometimes still weird, but it doesn’t get in the way too much.</p>
+<h2 id="Hardware"><a href="#Hardware" class="headerlink" title="Hardware"></a>Hardware</h2><ul>
+<li>CPU: i7-11800H</li>
+<li>Memory: 16G</li>
+<li>Graphics: Intel UHD Graphics</li>
+<li>Disk: 512GB</li>
+</ul>
+<p>Note: I specifically chose the Intel UHD graphics to avoid issues with proprietary NVIDIA drivers.</p>
+<h2 id="This-issues"><a href="#This-issues" class="headerlink" title="This issues"></a>This issues</h2><p>I’ve installed Ubuntu 21.10.</p>
+<ul>
+<li>Secure boot</li>
+<li>Flickering screen</li>
+<li>Battery drain while lid closed</li>
+<li>Short battery life when unplugged</li>
+<li>Trackpad weirdness</li>
+</ul>
+<h3 id="Secure-boot"><a href="#Secure-boot" class="headerlink" title="Secure boot"></a>Secure boot</h3><p>This is the first laptop I’ve had with secure boot.<br>When installing Ubuntu 21.10 from a USB stick you get a prompt about “secure boot”.<br>I went off and googled this, and by the time I got back it had timed out and made a decision for me.<br>I installed a few times, but ended up just switching secure boot off in the BIOS settings.<br>This hasn’t caused me any problems.</p>
+<h3 id="Flickering-Screen"><a href="#Flickering-Screen" class="headerlink" title="Flickering Screen"></a>Flickering Screen</h3><p>This is due to a kernel driver default setting.<br>You can find the answer and links to explanations <a target="_blank" rel="noopener" href="https://askubuntu.com/questions/1361640/screen-flickering-on-inspiron-16-plus-7610-after-installing-20-04-lts">here</a>.</p>
+<p>I added the args <code>i915.enable_psr=0</code> to the grub command line in <code>/etc/default/grub</code>.</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">GRUB_CMDLINE_LINUX_DEFAULT=&quot;quiet splash i915.enable_psr=0&quot;</span><br></pre></td></tr></table></figure>
+
+<p>Then</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ sudo update-grub</span><br><span class="line">$ reboot</span><br></pre></td></tr></table></figure>
+
+<h3 id="Battery-drain-while-lid-closed"><a href="#Battery-drain-while-lid-closed" class="headerlink" title="Battery drain while lid closed"></a>Battery drain while lid closed</h3><p>I noticed the battery loosing power when the lid was closed and the power unplugged.<br>This seems to have something to do with the sleep mode the laptop enters.<br>I found an answer <a target="_blank" rel="noopener" href="https://www.reddit.com/r/Dell/comments/8b6eci/xp_13_9370_battery_drain_while_suspended/">here</a>.</p>
+<p>I added the args <code>mem_sleep_default=deep</code> to the grub command line in <code>/etc/default/grub</code>.</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">GRUB_CMDLINE_LINUX_DEFAULT=&quot;quiet splash i915.enable_psr=0 mem_sleep_default=deep&quot;</span><br></pre></td></tr></table></figure>
+
+<p>Then</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ sudo update-grub</span><br><span class="line">$ reboot</span><br></pre></td></tr></table></figure>
+
+<h1 id="Short-battery-life-when-unplugged"><a href="#Short-battery-life-when-unplugged" class="headerlink" title="Short battery life when unplugged"></a>Short battery life when unplugged</h1><p>This is a problem with all Linux laptops, and it is not specific to the Dell. It seems the way manufacturers get a long battery life when unplugged<br>is by turning things down (like cpu frequency) or turning things off (like turbo boost). These get turned back up when<br>the system notices the load requirements have increased.</p>
+<p>To solve this you need some power management software.<br>There are a number of packages out there. I went for<br><a target="_blank" rel="noopener" href="https://github.com/AdnanHodzic/auto-cpufreq">auto-cpufreq</a>.</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ sudo snap install auto-cpufreq</span><br></pre></td></tr></table></figure>
+
+<p>I also decided to add the boot flag <code>intel_pstate=disable</code> to <code>/etc/default/grub</code><br>as recommended.</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">GRUB_CMDLINE_LINUX_DEFAULT=&quot;quiet splash i915.enable_psr=0 mem_sleep_default=deep intel_pstate=disable&quot;</span><br></pre></td></tr></table></figure>
+
+<p>Then</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ sudo update-grub</span><br><span class="line">$ reboot</span><br></pre></td></tr></table></figure>
+
+<p>The <a target="_blank" rel="noopener" href="https://wiki.debian.org/thermald">thermald</a> package is also<br>recommended, but that was already installed.</p>
+<h3 id="Trackpad-weirdness"><a href="#Trackpad-weirdness" class="headerlink" title="Trackpad weirdness"></a>Trackpad weirdness</h3><p>Sometimes the trackpad is weird.<br>The cursor movement becomes unresponsive, and clicks don’t work.<br>It seems to be more of a problem when the laptop is plugged in, but this may be anecdotal.</p>
+<p>There are two views on this.</p>
+<h4 id="Power-Management"><a href="#Power-Management" class="headerlink" title="Power Management"></a>Power Management</h4><p>The first is that it is an issue with power management on the trackpad.<br>You can find a discussion of that <a target="_blank" rel="noopener" href="https://askubuntu.com/questions/1231126/touchpad-power-management-issue-sticky-cursor-input-detection-delay-autosus?newreg=19ccd4cd1c1e46f38af9124cc16e4c54">here</a>.</p>
+<p>To address this I created a file <code>/lib/systemd/system/disable-trackpad-pm.service</code> with the contents:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">[Unit]</span><br><span class="line">Description=Disables trackpad power management to work around input delays</span><br><span class="line"></span><br><span class="line">[Service]</span><br><span class="line">Type=oneshot</span><br><span class="line">ExecStart=/bin/sh -c &quot;echo on &gt; /sys/bus/i2c/devices/i2c-0/device/power/control&quot;</span><br><span class="line"></span><br><span class="line">[Install]</span><br><span class="line">WantedBy=multi-user.target</span><br></pre></td></tr></table></figure>
+
+<p>Then:</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">$ sudo systemctl daemon-reload</span><br><span class="line">$ sudo systemctl <span class="built_in">enable</span> disable-trackpad-pm</span><br><span class="line">$ reboot</span><br></pre></td></tr></table></figure>
+
+<p>This has helped, but I still get the weirdness occasionally, especially when the laptop is plugged in.</p>
+<h4 id="Mechanical"><a href="#Mechanical" class="headerlink" title="Mechanical"></a>Mechanical</h4><p>The second view is that there is a mechanical problem.<br>The thought is that the battery (which is positioned under the trackpad)<br>interferes with the trackpad.<br>One solution proposed is to add some material (often plastic) between the battery and the trackpad.<br>You can find the instructions <a target="_blank" rel="noopener" href="https://www.dell.com/community/Inspiron/Running-List-of-Inspiron-7610-Touchpad-Issue-Posts/m-p/8095040/highlight/true#M132906">here</a>.</p>
+<p>I haven’t tried this yet, but I’m thinking about it, unless another driver issue gets found in the next month or so.</p>
+<h2 id="Thoughts"><a href="#Thoughts" class="headerlink" title="Thoughts"></a>Thoughts</h2><p>I really like the laptop (apart from the numeric keypad; why?),<br>and it’s been frustrating battling through these issues.</p>
+<p>I’m hoping someone gets to the bottom of the trackpad issue, as<br>this is an excellent machine and great value for money.</p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="https://rob-blackbourn.github.io/blog/2021/12/19/dell-inspiron-7610-linux/" data-id="cma87l7ga0051wrjp77jv7ubk" data-title="Setting up a Dell Inspiron 16 Plus (7610) for Linux" class="article-share-link"><span class="fa fa-share">Share</span></a>
+      
+      
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/blog/tags/7610/" rel="tag">7610</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/blog/tags/dell/" rel="tag">dell</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/blog/tags/inspiron/" rel="tag">inspiron</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/blog/tags/linux/" rel="tag">linux</a></li></ul>
+
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/blog/2022/12/21/python-negotiatestream-client/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Newer</strong>
+      <div class="article-nav-title">
+        
+          A Python client for .Net NegotiateStream
+        
+      </div>
+    </a>
+  
+  
+    <a href="/blog/2021/07/04/howto-llvm-vscode-ubuntu/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">How To Use clang With vscode On Ubuntu 20.04</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Categories</h3>
+    <div class="widget">
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/blog/categories/Admin/">Admin</a></li><li class="category-list-item"><a class="category-list-link" href="/blog/categories/Python/">Python</a></li><li class="category-list-item"><a class="category-list-link" href="/blog/categories/Serialization/">Serialization</a></li><li class="category-list-item"><a class="category-list-link" href="/blog/categories/WebAssembly/">WebAssembly</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Tags</h3>
+    <div class="widget">
+      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/7610/" rel="tag">7610</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/C/" rel="tag">C</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/DataFrame/" rel="tag">DataFrame</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/FinalizationRegistry/" rel="tag">FinalizationRegistry</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/JavaScript/" rel="tag">JavaScript</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/NegotiateStream/" rel="tag">NegotiateStream</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/Pydantic/" rel="tag">Pydantic</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/Python/" rel="tag">Python</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/Serialization/" rel="tag">Serialization</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/WebAssembly/" rel="tag">WebAssembly</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/array/" rel="tag">array</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/arrays/" rel="tag">arrays</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/asyncio/" rel="tag">asyncio</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/clang/" rel="tag">clang</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/cross-compile/" rel="tag">cross-compile</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/data/" rel="tag">data</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/dataframe/" rel="tag">dataframe</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/datascience/" rel="tag">datascience</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/dell/" rel="tag">dell</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/finalizer/" rel="tag">finalizer</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/inspiron/" rel="tag">inspiron</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/libc/" rel="tag">libc</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/linux/" rel="tag">linux</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/llvm/" rel="tag">llvm</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/malloc/" rel="tag">malloc</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/marshalling/" rel="tag">marshalling</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/memory/" rel="tag">memory</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/python/" rel="tag">python</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/science/" rel="tag">science</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/series/" rel="tag">series</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/ssl/" rel="tag">ssl</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/strings/" rel="tag">strings</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/ubuntu/" rel="tag">ubuntu</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/ubuntu-20-04/" rel="tag">ubuntu-20.04</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/vscode/" rel="tag">vscode</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/wasi/" rel="tag">wasi</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/wasi-sdk/" rel="tag">wasi-sdk</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/wasm/" rel="tag">wasm</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/wasm-libc/" rel="tag">wasm-libc</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Tag Cloud</h3>
+    <div class="widget tagcloud">
+      <a href="/blog/tags/7610/" style="font-size: 10px;">7610</a> <a href="/blog/tags/C/" style="font-size: 17.5px;">C</a> <a href="/blog/tags/DataFrame/" style="font-size: 12.5px;">DataFrame</a> <a href="/blog/tags/FinalizationRegistry/" style="font-size: 11.25px;">FinalizationRegistry</a> <a href="/blog/tags/JavaScript/" style="font-size: 18.75px;">JavaScript</a> <a href="/blog/tags/NegotiateStream/" style="font-size: 10px;">NegotiateStream</a> <a href="/blog/tags/Pydantic/" style="font-size: 10px;">Pydantic</a> <a href="/blog/tags/Python/" style="font-size: 10px;">Python</a> <a href="/blog/tags/Serialization/" style="font-size: 10px;">Serialization</a> <a href="/blog/tags/WebAssembly/" style="font-size: 20px;">WebAssembly</a> <a href="/blog/tags/array/" style="font-size: 13.75px;">array</a> <a href="/blog/tags/arrays/" style="font-size: 13.75px;">arrays</a> <a href="/blog/tags/asyncio/" style="font-size: 11.25px;">asyncio</a> <a href="/blog/tags/clang/" style="font-size: 16.25px;">clang</a> <a href="/blog/tags/cross-compile/" style="font-size: 11.25px;">cross-compile</a> <a href="/blog/tags/data/" style="font-size: 11.25px;">data</a> <a href="/blog/tags/dataframe/" style="font-size: 11.25px;">dataframe</a> <a href="/blog/tags/datascience/" style="font-size: 10px;">datascience</a> <a href="/blog/tags/dell/" style="font-size: 10px;">dell</a> <a href="/blog/tags/finalizer/" style="font-size: 11.25px;">finalizer</a> <a href="/blog/tags/inspiron/" style="font-size: 10px;">inspiron</a> <a href="/blog/tags/libc/" style="font-size: 12.5px;">libc</a> <a href="/blog/tags/linux/" style="font-size: 10px;">linux</a> <a href="/blog/tags/llvm/" style="font-size: 10px;">llvm</a> <a href="/blog/tags/malloc/" style="font-size: 10px;">malloc</a> <a href="/blog/tags/marshalling/" style="font-size: 12.5px;">marshalling</a> <a href="/blog/tags/memory/" style="font-size: 10px;">memory</a> <a href="/blog/tags/python/" style="font-size: 11.25px;">python</a> <a href="/blog/tags/science/" style="font-size: 11.25px;">science</a> <a href="/blog/tags/series/" style="font-size: 10px;">series</a> <a href="/blog/tags/ssl/" style="font-size: 10px;">ssl</a> <a href="/blog/tags/strings/" style="font-size: 11.25px;">strings</a> <a href="/blog/tags/ubuntu/" style="font-size: 10px;">ubuntu</a> <a href="/blog/tags/ubuntu-20-04/" style="font-size: 10px;">ubuntu-20.04</a> <a href="/blog/tags/vscode/" style="font-size: 10px;">vscode</a> <a href="/blog/tags/wasi/" style="font-size: 11.25px;">wasi</a> <a href="/blog/tags/wasi-sdk/" style="font-size: 15px;">wasi-sdk</a> <a href="/blog/tags/wasm/" style="font-size: 18.75px;">wasm</a> <a href="/blog/tags/wasm-libc/" style="font-size: 12.5px;">wasm-libc</a>
+    </div>
+  </div>
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Archives</h3>
+    <div class="widget">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2025/05/">May 2025</a></li><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2024/01/">January 2024</a></li><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2023/05/">May 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2022/12/">December 2022</a></li><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2021/12/">December 2021</a></li><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2021/07/">July 2021</a></li><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2020/07/">July 2020</a></li><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2020/06/">June 2020</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Recent Posts</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/blog/2025/05/03/pydantic-generic-serialization/">Serializing Pydantic with Metadata and Generic Fields</a>
+          </li>
+        
+          <li>
+            <a href="/blog/2024/01/24/wasm-gsl/">Revisiting WebAssembly Cross Compilation in January 2024</a>
+          </li>
+        
+          <li>
+            <a href="/blog/2023/05/23/python-start_tls/">Using asyncio start_tls in Python 3.11</a>
+          </li>
+        
+          <li>
+            <a href="/blog/2022/12/21/python-negotiatestream-client/">A Python client for .Net NegotiateStream</a>
+          </li>
+        
+          <li>
+            <a href="/blog/2021/12/19/dell-inspiron-7610-linux/">Setting up a Dell Inspiron 16 Plus (7610) for Linux</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      
+        <a rel="license noopener" target="_blank" href="http://creativecommons.org/licenses/by-nc-nd/4.0/"><img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by-nc-nd/4.0/88x31.png" /></a></br>
+All website licensed under <a href="https://creativecommons.org/licenses/by-nc-nd/4.0/" target="_blank">CC BY-NC-ND 4.0</a></br>
+      
+      &copy; 2025 Rob Blackbourn<br>
+      Powered by <a href="https://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/blog/" class="mobile-nav-link">Home</a>
+  
+    <a href="/blog/archives" class="mobile-nav-link">Archives</a>
+  
+</nav>
+    
+
+
+<script src="/blog/js/jquery-3.6.4.min.js"></script>
+
+
+
+  
+<script src="/blog/fancybox/jquery.fancybox.min.js"></script>
+
+
+
+
+<script src="/blog/js/script.js"></script>
+
+
+
+
+
+  </div>
+</body>
+</html>

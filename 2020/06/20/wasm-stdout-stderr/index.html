@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  
+  <title>Handling Stdout/Stderr with JavaScript and WebAssembly | Robs Blog</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta name="description" content="In myprevious postI found out how to pass strings between JavaScript and WebAssembly. The problemwith that solution was that I had to export console.log to the WebAssemblymodule. At some point I want">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Handling Stdout&#x2F;Stderr with JavaScript and WebAssembly">
+<meta property="og:url" content="https://rob-blackbourn.github.io/blog/2020/06/20/wasm-stdout-stderr/index.html">
+<meta property="og:site_name" content="Robs Blog">
+<meta property="og:description" content="In myprevious postI found out how to pass strings between JavaScript and WebAssembly. The problemwith that solution was that I had to export console.log to the WebAssemblymodule. At some point I want">
+<meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2020-06-20T20:59:00.000Z">
+<meta property="article:modified_time" content="2025-05-03T11:02:32.756Z">
+<meta property="article:author" content="Rob Blackbourn">
+<meta property="article:tag" content="WebAssembly">
+<meta property="article:tag" content="wasm">
+<meta property="article:tag" content="JavaScript">
+<meta property="article:tag" content="C">
+<meta property="article:tag" content="clang">
+<meta property="article:tag" content="libc">
+<meta property="article:tag" content="wasm-libc">
+<meta property="article:tag" content="strings">
+<meta name="twitter:card" content="summary">
+  
+    <link rel="alternate" href="/blog/atom.xml" title="Robs Blog" type="application/atom+xml">
+  
+  
+    <link rel="shortcut icon" href="/blog/favicon.png">
+  
+  
+  
+<link rel="stylesheet" href="/blog/css/style.css">
+
+  
+    
+<link rel="stylesheet" href="/blog/fancybox/jquery.fancybox.min.css">
+
+  
+  
+    
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fork-awesome@1.2.0/css/fork-awesome.min.css">
+
+  
+<meta name="generator" content="Hexo 7.0.0"></head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/blog/" id="logo">Robs Blog</a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"><span class="fa fa-bars"></span></a>
+        
+          <a class="main-nav-link" href="/blog/">Home</a>
+        
+          <a class="main-nav-link" href="/blog/archives">Archives</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+          
+            <a class="nav-icon" target="_blank" rel="noopener" href="https://github.com/rob-blackbourn"><span class="fa fa-github"></span></a>
+          
+            <a class="nav-icon" target="_blank" rel="noopener" href="https://www.linkedin.com/in/rob-blackbourn/"><span class="fa fa-linkedin"></span></a>
+          
+        
+        
+          <a class="nav-icon" href="/blog/atom.xml" title="RSS Feed"><span class="fa fa-rss"></span></a>
+        
+        <a class="nav-icon nav-search-btn" title="Search"><span class="fa fa-search"></span></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="https://rob-blackbourn.github.io/blog"></form>
+      </div>
+    </div>
+  </div>
+</header>
+
+      <div class="outer">
+        <section id="main"><article id="post-wasm-stdout-stderr" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  <div class="article-meta">
+    <a href="/blog/2020/06/20/wasm-stdout-stderr/" class="article-date">
+  <time class="dt-published" datetime="2020-06-20T20:59:00.000Z" itemprop="datePublished">2020-06-20</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/blog/categories/WebAssembly/">WebAssembly</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="p-name article-title" itemprop="headline name">
+      Handling Stdout/Stderr with JavaScript and WebAssembly
+    </h1>
+  
+
+      </header>
+    
+    <div class="e-content article-entry" itemprop="articleBody">
+      
+        <p>In my<br><a href="https://rob-blackbourn.github.io/blog/2020/06/20/wasm-string-passing/">previous post</a><br>I found out how to pass strings between JavaScript and WebAssembly. The problem<br>with that solution was that I had to export <code>console.log</code> to the WebAssembly<br>module. At some point I want to be able to take some library source code “off<br>the shelf”, compile and use it without modification.<br>Sadly many libraries will use <code>stdin</code>&#x2F;<code>stdout</code><br>with <code>printf</code>, <code>puts</code>, or <code>perror</code>.</p>
+<p>This is going to mean more work at the WASI layer!</p>
+<p>You can find the source code for this post<br><a target="_blank" rel="noopener" href="https://github.com/rob-blackbourn/example-wasm-stdout-stderr">here</a>.</p>
+<h2 id="The-Problem"><a href="#The-Problem" class="headerlink" title="The Problem"></a>The Problem</h2><p>If a program issues a call like <code>printf</code> it’s often sending its output to the<br>terminal, or possibly to a file. In any case this is certainly escaping the<br>WebAssembly sandbox. The<br><a target="_blank" rel="noopener" href="https://github.com/WebAssembly/wasi-libc">wasm-libc</a><br>library was built with the expectation of a WASI implementation. We can use this<br>to handle enough <code>stdio</code> to suit our needs.</p>
+<h2 id="The-C-Code"><a href="#The-C-Code" class="headerlink" title="The C Code"></a>The C Code</h2><p>Here is the C code I’d like to provide WASI support for.</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">define</span> __wasi__</span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdlib.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;locale.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="type">int</span> is_locale_initialised = <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line"><span class="type">static</span> <span class="type">void</span> <span class="title function_">initLocale</span><span class="params">()</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="comment">// The locale must be initialised before using</span></span><br><span class="line">    <span class="comment">// multi byte characters.</span></span><br><span class="line">    is_locale_initialised = <span class="number">1</span>;</span><br><span class="line">    setlocale(LC_ALL, <span class="string">&quot;&quot;</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">__attribute__((used)) <span class="type">void</span> <span class="title function_">callPerror</span><span class="params">(<span class="type">char</span>* ptr)</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">if</span> (is_locale_initialised == <span class="number">0</span>)</span><br><span class="line">        initLocale();</span><br><span class="line"></span><br><span class="line">    perror(<span class="string">&quot;Help!&quot;</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">__attribute__((used)) <span class="type">void</span> <span class="title function_">writeToStdout</span><span class="params">(<span class="type">char</span>* ptr)</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">if</span> (is_locale_initialised == <span class="number">0</span>)</span><br><span class="line">        initLocale();</span><br><span class="line"></span><br><span class="line">    <span class="built_in">fputs</span>(ptr, <span class="built_in">stdout</span>);</span><br><span class="line">    fflush(<span class="built_in">stdout</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">__attribute__((used)) <span class="type">void</span> <span class="title function_">writeToStderr</span><span class="params">(<span class="type">char</span>* ptr)</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">if</span> (is_locale_initialised == <span class="number">0</span>)</span><br><span class="line">        initLocale();</span><br><span class="line"></span><br><span class="line">    <span class="built_in">fputs</span>(ptr, <span class="built_in">stderr</span>);</span><br><span class="line">    fflush(<span class="built_in">stderr</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>Clearly the line at the start <code>#define __wasi__</code> needs some explanation. Without<br>this, compilation broke with the error<br><code>#error &lt;wasi/api.h&gt; is only supported on WASI platforms</code>. When I checked the<br>include file the <code>__wasi__</code> was the culprit. Defining it enabled the<br>stdio functionality.</p>
+<h2 id="The-JavaScript-Example"><a href="#The-JavaScript-Example" class="headerlink" title="The JavaScript Example"></a>The JavaScript Example</h2><p>This is basically a clone of the previous post. The example code is as follows.</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> setupWasi = <span class="built_in">require</span>(<span class="string">&#x27;./setup-wasi&#x27;</span>)</span><br><span class="line"></span><br><span class="line"><span class="keyword">async</span> <span class="keyword">function</span> <span class="title function_">main</span>(<span class="params"></span>) &#123;</span><br><span class="line">  <span class="comment">// Setup the WASI instance.</span></span><br><span class="line">  <span class="keyword">const</span> wasi = <span class="keyword">await</span> <span class="title function_">setupWasi</span>(<span class="string">&#x27;./stdio-example.wasm&#x27;</span>)</span><br><span class="line"></span><br><span class="line">  <span class="comment">// Get the functions exported from the WebAssembly</span></span><br><span class="line">  <span class="keyword">const</span> &#123;</span><br><span class="line">    writeToStdout,</span><br><span class="line">    writeToStderr,</span><br><span class="line">    callPerror</span><br><span class="line">  &#125; = wasi.<span class="property">instance</span>.<span class="property">exports</span></span><br><span class="line"></span><br><span class="line">  <span class="keyword">let</span> ptr1 = <span class="literal">null</span></span><br><span class="line">  <span class="keyword">try</span> &#123;</span><br><span class="line">    ptr1 = wasi.<span class="property">wasiMemoryManager</span>.<span class="title function_">convertFromString</span>(<span class="string">&#x27;To stdout\n&#x27;</span>)</span><br><span class="line">    <span class="title function_">writeToStdout</span>(ptr1.<span class="property">byteOffset</span>)</span><br><span class="line">  &#125; <span class="keyword">finally</span> &#123;</span><br><span class="line">    wasi.<span class="property">wasiMemoryManager</span>.<span class="title function_">free</span>(ptr1)</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">try</span> &#123;</span><br><span class="line">    ptr1 = wasi.<span class="property">wasiMemoryManager</span>.<span class="title function_">convertFromString</span>(<span class="string">&#x27;To stderr\n&#x27;</span>)</span><br><span class="line">    <span class="title function_">writeToStderr</span>(ptr1.<span class="property">byteOffset</span>)</span><br><span class="line">  &#125; <span class="keyword">finally</span> &#123;</span><br><span class="line">    wasi.<span class="property">wasiMemoryManager</span>.<span class="title function_">free</span>(ptr1)</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="title function_">callPerror</span>()</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="title function_">main</span>().<span class="title function_">then</span>(<span class="function">() =&gt;</span> <span class="variable language_">console</span>.<span class="title function_">log</span>(<span class="string">&#x27;Done&#x27;</span>))</span><br></pre></td></tr></table></figure>
+
+<p>I’ve used the helper function <code>convertFromString</code> to create the string in the<br>memory space of the WebAssembly instance.</p>
+<h2 id="The-WASI-Code"><a href="#The-WASI-Code" class="headerlink" title="The WASI Code"></a>The WASI Code</h2><p>Running the code exposes the calls we need to implement. It turned out we need:<br><code>fd_close</code>, <code>fd_seek</code>, <code>fd_write</code>, and <code>fd_fdstat_get</code>.</p>
+<p>My goal here is to implement <code>stdout</code> and <code>stderr</code> with <code>console.log</code> and<br><code>console.error</code>. Here is my implementation.</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br></pre></td><td class="code"><pre><span class="line">fd_close = <span class="function"><span class="params">fd</span> =&gt;</span> &#123;</span><br><span class="line">  <span class="keyword">return</span> <span class="variable constant_">WASI_ESUCCESS</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">fd_seek = <span class="function">(<span class="params">fd, offset_low, offset_high, whence, newOffset</span>) =&gt;</span> &#123;</span><br><span class="line">  <span class="keyword">return</span> <span class="variable constant_">WASI_ESUCCESS</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">fd_write = <span class="function">(<span class="params">fd, iovs, iovsLen, nwritten</span>) =&gt;</span> &#123;</span><br><span class="line">  <span class="comment">// We only care about stdout or stderr</span></span><br><span class="line">  <span class="keyword">if</span> (!(fd === <span class="variable constant_">STDOUT</span> | fd === <span class="variable constant_">STDERR</span>)) &#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="variable constant_">WASI_ERRNO_BADF</span></span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">const</span> view = <span class="keyword">new</span> <span class="title class_">DataView</span>(<span class="variable language_">this</span>.<span class="property">wasiMemoryManager</span>.<span class="property">memory</span>.<span class="property">buffer</span>)</span><br><span class="line"></span><br><span class="line">  <span class="comment">// Create a UInt8Array for each buffer</span></span><br><span class="line">  <span class="keyword">const</span> buffers = <span class="title class_">Array</span>.<span class="title function_">from</span>(&#123; <span class="attr">length</span>: iovsLen &#125;, <span class="function">(<span class="params">_, i</span>) =&gt;</span> &#123;</span><br><span class="line">    <span class="keyword">const</span> ptr = iovs + i * <span class="number">8</span>;</span><br><span class="line">    <span class="keyword">const</span> buf = view.<span class="title function_">getUint32</span>(ptr, <span class="literal">true</span>);</span><br><span class="line">    <span class="keyword">const</span> bufLen = view.<span class="title function_">getUint32</span>(ptr + <span class="number">4</span>, <span class="literal">true</span>);</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">new</span> <span class="title class_">Uint8Array</span>(<span class="variable language_">this</span>.<span class="property">wasiMemoryManager</span>.<span class="property">memory</span>.<span class="property">buffer</span>, buf, bufLen);</span><br><span class="line">  &#125;)</span><br><span class="line"></span><br><span class="line">  <span class="keyword">const</span> textDecoder = <span class="keyword">new</span> <span class="title class_">TextDecoder</span>()</span><br><span class="line"></span><br><span class="line">  <span class="comment">// Turn each buffer into a utf-8 string.</span></span><br><span class="line">  <span class="keyword">let</span> written = <span class="number">0</span>;</span><br><span class="line">  <span class="keyword">let</span> text = <span class="string">&#x27;&#x27;</span></span><br><span class="line">  buffers.<span class="title function_">forEach</span>(<span class="function"><span class="params">buf</span> =&gt;</span> &#123;</span><br><span class="line">    text += textDecoder.<span class="title function_">decode</span>(buf)</span><br><span class="line">    written += buf.<span class="property">byteLength</span></span><br><span class="line">  &#125;);</span><br><span class="line"></span><br><span class="line">  <span class="comment">// Return the bytes written.</span></span><br><span class="line">  view.<span class="title function_">setUint32</span>(nwritten, written, <span class="literal">true</span>);</span><br><span class="line"></span><br><span class="line">  <span class="comment">// Send the output to the console.</span></span><br><span class="line">  <span class="keyword">if</span> (fd === <span class="variable constant_">STDOUT</span>) &#123;</span><br><span class="line">    <span class="variable language_">this</span>.<span class="property">stdoutText</span> = <span class="title function_">drainWriter</span>(<span class="variable language_">console</span>.<span class="property">log</span>, <span class="variable language_">this</span>.<span class="property">stdoutText</span>, text)</span><br><span class="line">  &#125; <span class="keyword">else</span> <span class="keyword">if</span> (fd == <span class="variable constant_">STDERR</span>) &#123;</span><br><span class="line">    <span class="variable language_">this</span>.<span class="property">stderrText</span> = <span class="title function_">drainWriter</span>(<span class="variable language_">console</span>.<span class="property">error</span>, <span class="variable language_">this</span>.<span class="property">stderrText</span>, text)</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">return</span> <span class="variable constant_">WASI_ESUCCESS</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">fd_fdstat_get = <span class="function">(<span class="params">fd, stat</span>) =&gt;</span> &#123;</span><br><span class="line">  <span class="comment">// We only care about stdout or stderr</span></span><br><span class="line">  <span class="keyword">if</span> (!(fd === <span class="variable constant_">STDOUT</span> | fd === <span class="variable constant_">STDERR</span>)) &#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="variable constant_">WASI_ERRNO_BADF</span></span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">const</span> view = <span class="keyword">new</span> <span class="title class_">DataView</span>(<span class="variable language_">this</span>.<span class="property">wasiMemoryManager</span>.<span class="property">memory</span>.<span class="property">buffer</span>)</span><br><span class="line">  <span class="comment">// filetype</span></span><br><span class="line">  view.<span class="title function_">setUint8</span>(stat + <span class="number">0</span>, <span class="variable constant_">WASI_FILETYPE_CHARACTER_DEVICE</span>);</span><br><span class="line">  <span class="comment">// fdflags</span></span><br><span class="line">  view.<span class="title function_">setUint32</span>(stat + <span class="number">2</span>, <span class="variable constant_">WASI_FDFLAGS_APPEND</span>, <span class="literal">true</span>);</span><br><span class="line">  <span class="comment">// rights base</span></span><br><span class="line">  view.<span class="title function_">setBigUint64</span>(stat + <span class="number">8</span>, <span class="variable constant_">WASI_RIGHTS_FD_WRITE</span>, <span class="literal">true</span>);</span><br><span class="line">  <span class="comment">// rights inheriting</span></span><br><span class="line">  view.<span class="title function_">setBigUint64</span>(stat + <span class="number">16</span>, <span class="variable constant_">WASI_RIGHTS_FD_WRITE</span>, <span class="literal">true</span>);        </span><br><span class="line"></span><br><span class="line">  <span class="keyword">return</span> <span class="variable constant_">WASI_ESUCCESS</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>For <code>fd_close</code> and <code>fd_seek</code> there’s nothing to do. We Can’t close <code>console.log</code><br>and its not random access so we can’t seek.<br>The <code>fd_stat_get</code> function was a bit of a guess with<br>the rights inherit, but it worked. The <code>fd_write</code> function needed to be sensitive to newlines as there’s no way to suppress a newline in<br>the console functions. The text received gets appended until a newline is received, then we report it. The<br><code>drainWriter</code> function is as follows.</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">function</span> <span class="title function_">drainWriter</span> (write, prev, current) &#123;</span><br><span class="line">  <span class="keyword">let</span> text = prev + current</span><br><span class="line">  <span class="keyword">while</span> (text.<span class="title function_">includes</span>(<span class="string">&#x27;\n&#x27;</span>)) &#123;</span><br><span class="line">    <span class="keyword">const</span> [line, rest] = text.<span class="title function_">split</span>(<span class="string">&#x27;\n&#x27;</span>, <span class="number">2</span>)</span><br><span class="line">    <span class="title function_">write</span>(line)</span><br><span class="line">    text = rest</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">return</span> text</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="Thoughts"><a href="#Thoughts" class="headerlink" title="Thoughts"></a>Thoughts</h2><p>I’m feeling quite pleased. We’ve added some complication with the WASI<br>stubs, but the code is still fairly small and understandable. My goal<br>is to get to a point where I can drop in a C library and compile it to<br>WebAssembly without modification. At the moment this seems like a<br>realistic possibility.</p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="https://rob-blackbourn.github.io/blog/2020/06/20/wasm-stdout-stderr/" data-id="cma87l7g0000awrjpfg4u3bvh" data-title="Handling Stdout/Stderr with JavaScript and WebAssembly" class="article-share-link"><span class="fa fa-share">Share</span></a>
+      
+      
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/blog/tags/C/" rel="tag">C</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/blog/tags/JavaScript/" rel="tag">JavaScript</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/blog/tags/WebAssembly/" rel="tag">WebAssembly</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/blog/tags/clang/" rel="tag">clang</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/blog/tags/libc/" rel="tag">libc</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/blog/tags/strings/" rel="tag">strings</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/blog/tags/wasm/" rel="tag">wasm</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/blog/tags/wasm-libc/" rel="tag">wasm-libc</a></li></ul>
+
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/blog/2020/06/24/wasm-gsl/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Newer</strong>
+      <div class="article-nav-title">
+        
+          How to Cross Compile a C library to WebAssembly for use with JavaScript
+        
+      </div>
+    </a>
+  
+  
+    <a href="/blog/2020/06/20/wasm-string-passing/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">How to Pass Strings Between JavaScript and WebAssembly</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Categories</h3>
+    <div class="widget">
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/blog/categories/Admin/">Admin</a></li><li class="category-list-item"><a class="category-list-link" href="/blog/categories/Python/">Python</a></li><li class="category-list-item"><a class="category-list-link" href="/blog/categories/Serialization/">Serialization</a></li><li class="category-list-item"><a class="category-list-link" href="/blog/categories/WebAssembly/">WebAssembly</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Tags</h3>
+    <div class="widget">
+      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/7610/" rel="tag">7610</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/C/" rel="tag">C</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/DataFrame/" rel="tag">DataFrame</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/FinalizationRegistry/" rel="tag">FinalizationRegistry</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/JavaScript/" rel="tag">JavaScript</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/NegotiateStream/" rel="tag">NegotiateStream</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/Pydantic/" rel="tag">Pydantic</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/Python/" rel="tag">Python</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/Serialization/" rel="tag">Serialization</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/WebAssembly/" rel="tag">WebAssembly</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/array/" rel="tag">array</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/arrays/" rel="tag">arrays</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/asyncio/" rel="tag">asyncio</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/clang/" rel="tag">clang</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/cross-compile/" rel="tag">cross-compile</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/data/" rel="tag">data</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/dataframe/" rel="tag">dataframe</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/datascience/" rel="tag">datascience</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/dell/" rel="tag">dell</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/finalizer/" rel="tag">finalizer</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/inspiron/" rel="tag">inspiron</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/libc/" rel="tag">libc</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/linux/" rel="tag">linux</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/llvm/" rel="tag">llvm</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/malloc/" rel="tag">malloc</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/marshalling/" rel="tag">marshalling</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/memory/" rel="tag">memory</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/python/" rel="tag">python</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/science/" rel="tag">science</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/series/" rel="tag">series</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/ssl/" rel="tag">ssl</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/strings/" rel="tag">strings</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/ubuntu/" rel="tag">ubuntu</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/ubuntu-20-04/" rel="tag">ubuntu-20.04</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/vscode/" rel="tag">vscode</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/wasi/" rel="tag">wasi</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/wasi-sdk/" rel="tag">wasi-sdk</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/wasm/" rel="tag">wasm</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/wasm-libc/" rel="tag">wasm-libc</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Tag Cloud</h3>
+    <div class="widget tagcloud">
+      <a href="/blog/tags/7610/" style="font-size: 10px;">7610</a> <a href="/blog/tags/C/" style="font-size: 17.5px;">C</a> <a href="/blog/tags/DataFrame/" style="font-size: 12.5px;">DataFrame</a> <a href="/blog/tags/FinalizationRegistry/" style="font-size: 11.25px;">FinalizationRegistry</a> <a href="/blog/tags/JavaScript/" style="font-size: 18.75px;">JavaScript</a> <a href="/blog/tags/NegotiateStream/" style="font-size: 10px;">NegotiateStream</a> <a href="/blog/tags/Pydantic/" style="font-size: 10px;">Pydantic</a> <a href="/blog/tags/Python/" style="font-size: 10px;">Python</a> <a href="/blog/tags/Serialization/" style="font-size: 10px;">Serialization</a> <a href="/blog/tags/WebAssembly/" style="font-size: 20px;">WebAssembly</a> <a href="/blog/tags/array/" style="font-size: 13.75px;">array</a> <a href="/blog/tags/arrays/" style="font-size: 13.75px;">arrays</a> <a href="/blog/tags/asyncio/" style="font-size: 11.25px;">asyncio</a> <a href="/blog/tags/clang/" style="font-size: 16.25px;">clang</a> <a href="/blog/tags/cross-compile/" style="font-size: 11.25px;">cross-compile</a> <a href="/blog/tags/data/" style="font-size: 11.25px;">data</a> <a href="/blog/tags/dataframe/" style="font-size: 11.25px;">dataframe</a> <a href="/blog/tags/datascience/" style="font-size: 10px;">datascience</a> <a href="/blog/tags/dell/" style="font-size: 10px;">dell</a> <a href="/blog/tags/finalizer/" style="font-size: 11.25px;">finalizer</a> <a href="/blog/tags/inspiron/" style="font-size: 10px;">inspiron</a> <a href="/blog/tags/libc/" style="font-size: 12.5px;">libc</a> <a href="/blog/tags/linux/" style="font-size: 10px;">linux</a> <a href="/blog/tags/llvm/" style="font-size: 10px;">llvm</a> <a href="/blog/tags/malloc/" style="font-size: 10px;">malloc</a> <a href="/blog/tags/marshalling/" style="font-size: 12.5px;">marshalling</a> <a href="/blog/tags/memory/" style="font-size: 10px;">memory</a> <a href="/blog/tags/python/" style="font-size: 11.25px;">python</a> <a href="/blog/tags/science/" style="font-size: 11.25px;">science</a> <a href="/blog/tags/series/" style="font-size: 10px;">series</a> <a href="/blog/tags/ssl/" style="font-size: 10px;">ssl</a> <a href="/blog/tags/strings/" style="font-size: 11.25px;">strings</a> <a href="/blog/tags/ubuntu/" style="font-size: 10px;">ubuntu</a> <a href="/blog/tags/ubuntu-20-04/" style="font-size: 10px;">ubuntu-20.04</a> <a href="/blog/tags/vscode/" style="font-size: 10px;">vscode</a> <a href="/blog/tags/wasi/" style="font-size: 11.25px;">wasi</a> <a href="/blog/tags/wasi-sdk/" style="font-size: 15px;">wasi-sdk</a> <a href="/blog/tags/wasm/" style="font-size: 18.75px;">wasm</a> <a href="/blog/tags/wasm-libc/" style="font-size: 12.5px;">wasm-libc</a>
+    </div>
+  </div>
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Archives</h3>
+    <div class="widget">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2025/05/">May 2025</a></li><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2024/01/">January 2024</a></li><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2023/05/">May 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2022/12/">December 2022</a></li><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2021/12/">December 2021</a></li><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2021/07/">July 2021</a></li><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2020/07/">July 2020</a></li><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2020/06/">June 2020</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Recent Posts</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/blog/2025/05/03/pydantic-generic-serialization/">Serializing Pydantic with Metadata and Generic Fields</a>
+          </li>
+        
+          <li>
+            <a href="/blog/2024/01/24/wasm-gsl/">Revisiting WebAssembly Cross Compilation in January 2024</a>
+          </li>
+        
+          <li>
+            <a href="/blog/2023/05/23/python-start_tls/">Using asyncio start_tls in Python 3.11</a>
+          </li>
+        
+          <li>
+            <a href="/blog/2022/12/21/python-negotiatestream-client/">A Python client for .Net NegotiateStream</a>
+          </li>
+        
+          <li>
+            <a href="/blog/2021/12/19/dell-inspiron-7610-linux/">Setting up a Dell Inspiron 16 Plus (7610) for Linux</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      
+        <a rel="license noopener" target="_blank" href="http://creativecommons.org/licenses/by-nc-nd/4.0/"><img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by-nc-nd/4.0/88x31.png" /></a></br>
+All website licensed under <a href="https://creativecommons.org/licenses/by-nc-nd/4.0/" target="_blank">CC BY-NC-ND 4.0</a></br>
+      
+      &copy; 2025 Rob Blackbourn<br>
+      Powered by <a href="https://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/blog/" class="mobile-nav-link">Home</a>
+  
+    <a href="/blog/archives" class="mobile-nav-link">Archives</a>
+  
+</nav>
+    
+
+
+<script src="/blog/js/jquery-3.6.4.min.js"></script>
+
+
+
+  
+<script src="/blog/fancybox/jquery.fancybox.min.js"></script>
+
+
+
+
+<script src="/blog/js/script.js"></script>
+
+
+
+
+
+  </div>
+</body>
+</html>

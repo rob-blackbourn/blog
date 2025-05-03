@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  
+  <title>WASI Marshalling | Robs Blog</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta name="description" content="In this series of posts I’ve done a lot of experimentation. An element whichI’ve had to implement a number of times is calling functions defined in aWebAssembly module. Calling a WebAssembly function">
+<meta property="og:type" content="article">
+<meta property="og:title" content="WASI Marshalling">
+<meta property="og:url" content="https://rob-blackbourn.github.io/blog/2020/07/02/wasi-marshalling/index.html">
+<meta property="og:site_name" content="Robs Blog">
+<meta property="og:description" content="In this series of posts I’ve done a lot of experimentation. An element whichI’ve had to implement a number of times is calling functions defined in aWebAssembly module. Calling a WebAssembly function">
+<meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2020-07-02T19:06:00.000Z">
+<meta property="article:modified_time" content="2025-05-03T11:02:32.757Z">
+<meta property="article:author" content="Rob Blackbourn">
+<meta property="article:tag" content="WebAssembly">
+<meta property="article:tag" content="wasm">
+<meta property="article:tag" content="JavaScript">
+<meta property="article:tag" content="C">
+<meta property="article:tag" content="clang">
+<meta property="article:tag" content="wasi-sdk">
+<meta property="article:tag" content="marshalling">
+<meta name="twitter:card" content="summary">
+  
+    <link rel="alternate" href="/blog/atom.xml" title="Robs Blog" type="application/atom+xml">
+  
+  
+    <link rel="shortcut icon" href="/blog/favicon.png">
+  
+  
+  
+<link rel="stylesheet" href="/blog/css/style.css">
+
+  
+    
+<link rel="stylesheet" href="/blog/fancybox/jquery.fancybox.min.css">
+
+  
+  
+    
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fork-awesome@1.2.0/css/fork-awesome.min.css">
+
+  
+<meta name="generator" content="Hexo 7.0.0"></head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/blog/" id="logo">Robs Blog</a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"><span class="fa fa-bars"></span></a>
+        
+          <a class="main-nav-link" href="/blog/">Home</a>
+        
+          <a class="main-nav-link" href="/blog/archives">Archives</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+          
+            <a class="nav-icon" target="_blank" rel="noopener" href="https://github.com/rob-blackbourn"><span class="fa fa-github"></span></a>
+          
+            <a class="nav-icon" target="_blank" rel="noopener" href="https://www.linkedin.com/in/rob-blackbourn/"><span class="fa fa-linkedin"></span></a>
+          
+        
+        
+          <a class="nav-icon" href="/blog/atom.xml" title="RSS Feed"><span class="fa fa-rss"></span></a>
+        
+        <a class="nav-icon nav-search-btn" title="Search"><span class="fa fa-search"></span></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="https://rob-blackbourn.github.io/blog"></form>
+      </div>
+    </div>
+  </div>
+</header>
+
+      <div class="outer">
+        <section id="main"><article id="post-wasi-marshalling" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  <div class="article-meta">
+    <a href="/blog/2020/07/02/wasi-marshalling/" class="article-date">
+  <time class="dt-published" datetime="2020-07-02T19:06:00.000Z" itemprop="datePublished">2020-07-02</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/blog/categories/WebAssembly/">WebAssembly</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="p-name article-title" itemprop="headline name">
+      WASI Marshalling
+    </h1>
+  
+
+      </header>
+    
+    <div class="e-content article-entry" itemprop="articleBody">
+      
+        <p>In this series of posts I’ve done a lot of experimentation. An element which<br>I’ve had to implement a number of times is calling functions defined in a<br>WebAssembly module.</p>
+<p>Calling a WebAssembly function involves transferring data to an instance,<br>calling a function, and retrieving the results. This is known as marshalling.</p>
+<p>The source code for the examples can be found<br><a target="_blank" rel="noopener" href="https://github.com/rob-blackbourn/example-wasi-marshalling">here</a><br>and the marshalling package<br><a target="_blank" rel="noopener" href="https://github.com/rob-blackbourn/jetblack-wasi-marshalling">here</a>.</p>
+<h2 id="Our-First-C-Function"><a href="#Our-First-C-Function" class="headerlink" title="Our First C Function"></a>Our First C Function</h2><p>Here is an example function written in C and compiled to WebAssembly.</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">__attribute__((used)) <span class="type">double</span>* <span class="title function_">multipleFloat64ArraysReturningPtr</span> <span class="params">(</span></span><br><span class="line"><span class="params">    <span class="type">double</span>* array1,</span></span><br><span class="line"><span class="params">    <span class="type">double</span>* array2, </span></span><br><span class="line"><span class="params">    <span class="type">int</span> length)</span></span><br><span class="line">&#123;</span><br><span class="line">  <span class="type">double</span>* result = (<span class="type">double</span>*) <span class="built_in">malloc</span>(length * <span class="keyword">sizeof</span>(<span class="type">double</span>));</span><br><span class="line">  <span class="keyword">if</span> (result == <span class="number">0</span>)</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; length; ++i) &#123;</span><br><span class="line">    result[i] = array1[i] + array2[i];</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">return</span> result;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>At the highest level the function takes two floating point arrays which it<br>multiplies and returns the result. At a lower level, two pointers to double<br>arrays are passed with a length. A result pointer is allocated with the required<br>length in which the result is stored. Finally the pointer to the result array<br>is returned.</p>
+<p>To make this happen, first memory has to be allocated for the two input arrays<br>in the WebAssembly module. The data must then be copied into the arrays. When<br>the function is called it creates a third array by allocating space in the<br>WebAssembly. The pointer to this memory is then returned. The JavaScript must<br>copy the result array, then free the two input arrays and the result array.</p>
+<h2 id="Our-First-JavaScript-Prototype"><a href="#Our-First-JavaScript-Prototype" class="headerlink" title="Our First JavaScript Prototype"></a>Our First JavaScript Prototype</h2><p>I’ve written a package to simplify the marshalling of data between JavaScript<br>and WebAssembly. Here is how to create a binding for the function.</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> proto = <span class="keyword">new</span> <span class="title class_">FunctionPrototype</span>(</span><br><span class="line">    [</span><br><span class="line">        <span class="keyword">new</span> <span class="title class_">In</span>(<span class="keyword">new</span> <span class="title class_">ArrayType</span>(<span class="keyword">new</span> <span class="title class_">Float64Type</span>())),</span><br><span class="line">        <span class="keyword">new</span> <span class="title class_">In</span>(<span class="keyword">new</span> <span class="title class_">ArrayType</span>(<span class="keyword">new</span> <span class="title class_">Float64Type</span>())),</span><br><span class="line">        <span class="keyword">new</span> <span class="title class_">In</span>(<span class="keyword">new</span> <span class="title class_">Int32Type</span>())</span><br><span class="line">    ],</span><br><span class="line">    <span class="keyword">new</span> <span class="title class_">ArrayType</span>(<span class="keyword">new</span> <span class="title class_">Float64Type</span>(), <span class="number">4</span>))</span><br></pre></td></tr></table></figure>
+
+<p>This matches the <code>C</code> prototype.</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">__attribute__((used)) <span class="type">double</span>* <span class="title function_">multipleFloat64ArraysReturningPtr</span> <span class="params">(</span></span><br><span class="line"><span class="params">    <span class="type">double</span>* array1,</span></span><br><span class="line"><span class="params">    <span class="type">double</span>* array2, </span></span><br><span class="line"><span class="params">    <span class="type">int</span> length)</span></span><br></pre></td></tr></table></figure>
+
+<p>Note that the return type also declares the length of the returned array. The<br><code>C</code> function will only return a pointer to the start of the array, so we need<br>the length. In the real world we’d probably make a function out of prototypes<br>that require length parameters.</p>
+<p>We can invoke the function as follows.</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> result = proto.<span class="title function_">invoke</span>(</span><br><span class="line">  wasi.<span class="property">memoryManager</span>,</span><br><span class="line">  wasi.<span class="property">instance</span>.<span class="property">exports</span>.<span class="property">multipleFloat64ArraysReturningPtr</span>,</span><br><span class="line">  [<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>],</span><br><span class="line">  [<span class="number">5</span>, <span class="number">6</span>, <span class="number">7</span>, <span class="number">8</span>],</span><br><span class="line">  <span class="number">4</span>)</span><br></pre></td></tr></table></figure>
+
+<p>As well as the function arguments we provide <code>wasi.memoryManager</code> to allow<br>access to the WebAssembly memory and <code>wasi.instance</code> to retrieve the function.</p>
+<p>When the function is invoked three things happen. First the input arguments are<br><em>marshalled</em>. Memory is allocated for each array, and the array data is copied<br>into that memory. The integer value can be passed directly.</p>
+<p>Second the function is called with the marshalled arguments and the return value<br>is received.</p>
+<p>Third the memory for the input arguments is freed, the result value is copied<br>from the WebAssembly memory to a JavaScript array, and the memory that was<br>allocated inside the WebAssembly instance is freed.</p>
+<h2 id="Memory"><a href="#Memory" class="headerlink" title="Memory"></a>Memory</h2><p>While not strictly part of WASI, memory management is the first problem to<br>solve. When a WebAssembly module is instantiated a memory buffer is either<br>passed, or created by the instance. When using the WASM standard library<br>provided by <a target="_blank" rel="noopener" href="https://github.com/WebAssembly/wasi-libc">wasi-libc</a> the memory<br>management functions <code>malloc</code> and <code>free</code> can be exported from the instance.</p>
+<p>After instantiation they are held in the following class.</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">MemoryManager</span> &#123;</span><br><span class="line">  <span class="title function_">constructor</span> (memory, malloc, free) &#123;</span><br><span class="line">    <span class="variable language_">this</span>.<span class="property">memory</span> = memory</span><br><span class="line">    <span class="variable language_">this</span>.<span class="property">malloc</span> = malloc</span><br><span class="line">    <span class="variable language_">this</span>.<span class="property">free</span> = free</span><br><span class="line">    <span class="variable language_">this</span>.<span class="property">dataView</span> = <span class="keyword">new</span> <span class="title class_">DataView</span>(<span class="variable language_">this</span>.<span class="property">memory</span>.<span class="property">buffer</span>)</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>An array of floats might be marshalled as follows.</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">function</span> <span class="title function_">marshallFloat64Array</span>(<span class="params">memoryManager, array</span>) &#123;</span><br><span class="line">  <span class="keyword">const</span> address = memoryManager.<span class="title function_">malloc</span>(<span class="title class_">Float64Array</span>.<span class="property">BYTES_PER_ELEMENT</span> * array.<span class="property">length</span>)</span><br><span class="line">  <span class="keyword">const</span> typedArray = <span class="keyword">new</span> <span class="title class_">Float64Array</span>(memoryManager.<span class="property">memory</span>.<span class="property">buffer</span>, address, array.<span class="property">length</span>)</span><br><span class="line">  typedArray.<span class="title function_">set</span>(array)</span><br><span class="line">  <span class="keyword">return</span> address</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>An array that was allocated inside the WebAssembly instance might be<br>un-marshalled as follows.</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">function</span> <span class="title function_">unmarshallFloat64Array</span>(<span class="params">memoryManager, address, length</span>) &#123;</span><br><span class="line">  <span class="keyword">try</span> &#123;</span><br><span class="line">    <span class="keyword">const</span> typedArray = <span class="keyword">new</span> <span class="title class_">Float64Array</span>(memoryManager.<span class="property">memory</span>.<span class="property">buffer</span>, address, length)</span><br><span class="line">    <span class="keyword">return</span> <span class="title class_">Array</span>.<span class="title function_">from</span>(typedArray)</span><br><span class="line">  &#125; <span class="keyword">finally</span> &#123;</span><br><span class="line">    memoryManager.<span class="title function_">free</span>(address)</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="Our-Second-C-Function"><a href="#Our-Second-C-Function" class="headerlink" title="Our Second C Function"></a>Our Second C Function</h2><p>Here is our second <code>C</code> function.</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">__attribute__((used)) <span class="type">void</span> <span class="title function_">multipleFloat64ArraysWithOutputArray</span> <span class="params">(<span class="type">double</span>* array1, <span class="type">double</span>* array2, <span class="type">double</span>* result, <span class="type">int</span> length)</span></span><br><span class="line">&#123;</span><br><span class="line">  <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; length; ++i) &#123;</span><br><span class="line">    result[i] = array1[i] + array2[i];</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>This time the calling function allocates the memory for the output array and<br>passes it in.</p>
+<h2 id="Our-Second-JavaScript-Function-Prototype"><a href="#Our-Second-JavaScript-Function-Prototype" class="headerlink" title="Our Second JavaScript Function Prototype"></a>Our Second JavaScript Function Prototype</h2><p>The JvaScript function prototype looks as follows.</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> proto2 = <span class="keyword">new</span> <span class="title class_">FunctionPrototype</span>(</span><br><span class="line">  [</span><br><span class="line">    <span class="keyword">new</span> <span class="title class_">In</span>(<span class="keyword">new</span> <span class="title class_">ArrayType</span>(<span class="keyword">new</span> <span class="title class_">Float64Type</span>())),</span><br><span class="line">    <span class="keyword">new</span> <span class="title class_">In</span>(<span class="keyword">new</span> <span class="title class_">ArrayType</span>(<span class="keyword">new</span> <span class="title class_">Float64Type</span>())),</span><br><span class="line">    <span class="keyword">new</span> <span class="title class_">Out</span>(<span class="keyword">new</span> <span class="title class_">ArrayType</span>(<span class="keyword">new</span> <span class="title class_">Float64Type</span>())),</span><br><span class="line">    <span class="keyword">new</span> <span class="title class_">In</span>(<span class="keyword">new</span> <span class="title class_">Int32Type</span>())</span><br><span class="line">  ]</span><br><span class="line">)</span><br></pre></td></tr></table></figure>
+
+<p>We don’t need to provide a return type as nothing is returned. The <em>output</em><br>argument is wrapped in an <code>Out</code> class to inform the marshaller to unpack it<br>after the function is called.</p>
+<p>The function is called as follows.</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> output = <span class="keyword">new</span> <span class="title class_">Array</span>(<span class="number">4</span>)</span><br><span class="line">proto2.<span class="title function_">invoke</span>(</span><br><span class="line">  wasi.<span class="property">memoryManager</span>,</span><br><span class="line">  wasi.<span class="property">instance</span>.<span class="property">exports</span>.<span class="property">multipleFloat64ArraysWithOutputArray</span>,</span><br><span class="line">  [<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>],</span><br><span class="line">  [<span class="number">5</span>, <span class="number">6</span>, <span class="number">7</span>, <span class="number">8</span>],</span><br><span class="line">  output,</span><br><span class="line">  <span class="number">4</span>)</span><br></pre></td></tr></table></figure>
+
+<p>Because we supplied the output array with the correct length, we didn’t need<br>to supply a length argument to <code>ArrayType</code>.</p>
+<h2 id="Where’s-WASI"><a href="#Where’s-WASI" class="headerlink" title="Where’s WASI?"></a>Where’s WASI?</h2><p>So far there’s been no need for WASI. That ends with strings.</p>
+<p>WASI enters the picture when we need to leave the WebAssembly sandbox and<br>interact with the system in which we’re running. It’s not obvious why this<br>should happen with strings. In JavaSCript strings use UTF-8. As soon<br>as we need to decode a string the C standard library will want to know about<br>our <em>locale</em> (our language environment). To do this it it checks the environment<br>variables, which exist outside the sandbox!</p>
+<p>This introduces the first of our system call requirement: <code>environ_sizes_get</code><br>and <code>environ_get</code>. The first call finds the amount of space required to store<br>the environment variables; the second fetches them.</p>
+<p>The other need for WASI is when the code interacts with stdout&#x2F;stderr. While<br>we might think this is unnecessary, it is common for C libraries to report<br>errors through the <code>perror</code> function which returns and error and reports the<br>cause to stderr.</p>
+<p>There are a small bunch of functions we need to support here. The final outcome<br>is the following set of imports to the WebAssembly.</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> res = <span class="keyword">await</span> <span class="title class_">WebAssembly</span>.<span class="title function_">instantiate</span>(buf, &#123;</span><br><span class="line">  <span class="attr">wasi_snapshot_preview1</span>: &#123;</span><br><span class="line">    <span class="attr">environ_get</span>: <span class="function">(<span class="params">environ, environBuf</span>) =&gt;</span> wasi.<span class="title function_">environ_get</span>(environ, environBuf),</span><br><span class="line">    <span class="attr">environ_sizes_get</span>: <span class="function">(<span class="params">environCount, environBufSize</span>) =&gt;</span> wasi.<span class="property">environ_sizes_getnvironCount</span>, environBufSize),</span><br><span class="line">    <span class="attr">proc_exit</span>: <span class="function"><span class="params">rval</span> =&gt;</span> wasi.<span class="title function_">proc_exit</span>(rval),</span><br><span class="line">    <span class="attr">fd_close</span>: <span class="function"><span class="params">fd</span> =&gt;</span> wasi.<span class="title function_">fd_close</span>(fd),</span><br><span class="line">    <span class="attr">fd_seek</span>: <span class="function">(<span class="params">fd, offset_low, offset_high, whence, newOffset</span>) =&gt;</span> wasi.<span class="title function_">fd_seek</span>(fd, fset_low, offset_high, whence, newOffset),</span><br><span class="line">    <span class="attr">fd_write</span>: <span class="function">(<span class="params">fd, iovs, iovsLen, nwritten</span>) =&gt;</span> wasi.<span class="title function_">fd_write</span>(fd, iovs, iovsLen, ritten),</span><br><span class="line">    <span class="attr">fd_fdstat_get</span>: <span class="function">(<span class="params">fd, stat</span>) =&gt;</span> wasi.<span class="title function_">fd_fdstat_get</span>(fd, stat)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;)</span><br></pre></td></tr></table></figure>
+
+<p>With this relatively small set of imports we can import the vast majority of<br>publicly available C libraries.</p>
+<h2 id="Strings-Stdout-Stderr"><a href="#Strings-Stdout-Stderr" class="headerlink" title="Strings &amp; Stdout&#x2F;Stderr"></a>Strings &amp; Stdout&#x2F;Stderr</h2><p>You can check out the source code fore the implementations and use of these.<br>They are not typically use from JavaScript, and are only provided to allow<br>imported C libraries to run.</p>
+<h2 id="Wiring-It-Up"><a href="#Wiring-It-Up" class="headerlink" title="Wiring It Up"></a>Wiring It Up</h2><p>The example project shows how this works with node and in the browser. Here’s<br>the browser version.</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br></pre></td><td class="code"><pre><span class="line">&lt;script&gt;</span><br><span class="line"><span class="keyword">const</span> &#123;</span><br><span class="line">    <span class="title class_">Wasi</span>,</span><br><span class="line">    <span class="title class_">Float64Type</span>,</span><br><span class="line">    <span class="title class_">ArrayType</span>,</span><br><span class="line">    <span class="title class_">Int32Type</span>,</span><br><span class="line">    <span class="title class_">StringType</span>,</span><br><span class="line">    <span class="title class_">FunctionPrototype</span>,</span><br><span class="line">    <span class="title class_">In</span>,</span><br><span class="line">    <span class="title class_">Out</span></span><br><span class="line">&#125; = wasiMarshalling</span><br><span class="line"></span><br><span class="line"><span class="comment">// Create the Wasi instance passing in environment variables.</span></span><br><span class="line"><span class="keyword">const</span> wasi = <span class="keyword">new</span> <span class="title class_">Wasi</span>(&#123;&#125;)</span><br><span class="line"></span><br><span class="line"><span class="comment">// Instantiate the wasm module.</span></span><br><span class="line"><span class="title class_">WebAssembly</span>.<span class="title function_">instantiateStreaming</span>(</span><br><span class="line">  <span class="title function_">fetch</span>(<span class="string">&#x27;example.wasm&#x27;</span>), &#123;</span><br><span class="line">    <span class="attr">wasi_snapshot_preview1</span>: wasi.imports()</span><br><span class="line">  &#125;)</span><br><span class="line">  .<span class="title function_">then</span>(<span class="function"><span class="params">res</span> =&gt;</span> &#123;</span><br><span class="line">    <span class="comment">// Initialise the wasi instance</span></span><br><span class="line">    wasi.<span class="title function_">init</span>(res.<span class="property">instance</span>)</span><br><span class="line"></span><br><span class="line">    <span class="comment">// The first example takes in two arrays on the same length and</span></span><br><span class="line">    <span class="comment">// multiplies them, returning a third array.</span></span><br><span class="line">    <span class="keyword">const</span> proto1 = <span class="keyword">new</span> <span class="title class_">FunctionPrototype</span>(</span><br><span class="line">      [</span><br><span class="line">        <span class="keyword">new</span> <span class="title class_">In</span>(<span class="keyword">new</span> <span class="title class_">ArrayType</span>(<span class="keyword">new</span> <span class="title class_">Float64Type</span>())),</span><br><span class="line">        <span class="keyword">new</span> <span class="title class_">In</span>(<span class="keyword">new</span> <span class="title class_">ArrayType</span>(<span class="keyword">new</span> <span class="title class_">Float64Type</span>())),</span><br><span class="line">        <span class="keyword">new</span> <span class="title class_">In</span>(<span class="keyword">new</span> <span class="title class_">Int32Type</span>())</span><br><span class="line">      ],</span><br><span class="line">      <span class="keyword">new</span> <span class="title class_">ArrayType</span>(<span class="keyword">new</span> <span class="title class_">Float64Type</span>(), <span class="number">4</span>)</span><br><span class="line">    )</span><br><span class="line"></span><br><span class="line">    <span class="keyword">const</span> result1 = proto1.<span class="title function_">invoke</span>(</span><br><span class="line">      wasi.<span class="property">memoryManager</span>,</span><br><span class="line">      wasi.<span class="property">instance</span>.<span class="property">exports</span>.<span class="property">multipleFloat64ArraysReturningPtr</span>,</span><br><span class="line">      [<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>],</span><br><span class="line">      [<span class="number">5</span>, <span class="number">6</span>, <span class="number">7</span>, <span class="number">8</span>],</span><br><span class="line">      <span class="number">4</span>)</span><br><span class="line">    <span class="variable language_">console</span>.<span class="title function_">log</span>(result1)</span><br><span class="line">    ...</span><br><span class="line">&lt;/script&gt;</span><br></pre></td></tr></table></figure>
+
+<h2 id="Thoughts"><a href="#Thoughts" class="headerlink" title="Thoughts"></a>Thoughts</h2><p>We’ve got a generic marshalling layer between JavaScript and WebAssembly which<br>is pretty cool! We’ve also got enough WASI to drop in publicly available<br><code>C</code> libraries.</p>
+<p>We’ve not yet addressed C++ libraries and we’re waiting for the <code>flang</code> compiler<br>to be incorporated into the <code>llvm</code> toolchain, so there’s a way to go before we<br>have access to everything we need to use JavaSCript to do real work with<br>native libraries.</p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="https://rob-blackbourn.github.io/blog/2020/07/02/wasi-marshalling/" data-id="cma87l7g1000cwrjpgkp39nkk" data-title="WASI Marshalling" class="article-share-link"><span class="fa fa-share">Share</span></a>
+      
+      
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/blog/tags/C/" rel="tag">C</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/blog/tags/JavaScript/" rel="tag">JavaScript</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/blog/tags/WebAssembly/" rel="tag">WebAssembly</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/blog/tags/clang/" rel="tag">clang</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/blog/tags/marshalling/" rel="tag">marshalling</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/blog/tags/wasi-sdk/" rel="tag">wasi-sdk</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/blog/tags/wasm/" rel="tag">wasm</a></li></ul>
+
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/blog/2020/07/07/wasi-finalizers-1/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Newer</strong>
+      <div class="article-nav-title">
+        
+          WASI Marshalling with Finalizers
+        
+      </div>
+    </a>
+  
+  
+    <a href="/blog/2020/06/24/wasm-gsl/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">How to Cross Compile a C library to WebAssembly for use with JavaScript</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Categories</h3>
+    <div class="widget">
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/blog/categories/Admin/">Admin</a></li><li class="category-list-item"><a class="category-list-link" href="/blog/categories/Python/">Python</a></li><li class="category-list-item"><a class="category-list-link" href="/blog/categories/Serialization/">Serialization</a></li><li class="category-list-item"><a class="category-list-link" href="/blog/categories/WebAssembly/">WebAssembly</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Tags</h3>
+    <div class="widget">
+      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/7610/" rel="tag">7610</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/C/" rel="tag">C</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/DataFrame/" rel="tag">DataFrame</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/FinalizationRegistry/" rel="tag">FinalizationRegistry</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/JavaScript/" rel="tag">JavaScript</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/NegotiateStream/" rel="tag">NegotiateStream</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/Pydantic/" rel="tag">Pydantic</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/Python/" rel="tag">Python</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/Serialization/" rel="tag">Serialization</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/WebAssembly/" rel="tag">WebAssembly</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/array/" rel="tag">array</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/arrays/" rel="tag">arrays</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/asyncio/" rel="tag">asyncio</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/clang/" rel="tag">clang</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/cross-compile/" rel="tag">cross-compile</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/data/" rel="tag">data</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/dataframe/" rel="tag">dataframe</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/datascience/" rel="tag">datascience</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/dell/" rel="tag">dell</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/finalizer/" rel="tag">finalizer</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/inspiron/" rel="tag">inspiron</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/libc/" rel="tag">libc</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/linux/" rel="tag">linux</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/llvm/" rel="tag">llvm</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/malloc/" rel="tag">malloc</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/marshalling/" rel="tag">marshalling</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/memory/" rel="tag">memory</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/python/" rel="tag">python</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/science/" rel="tag">science</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/series/" rel="tag">series</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/ssl/" rel="tag">ssl</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/strings/" rel="tag">strings</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/ubuntu/" rel="tag">ubuntu</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/ubuntu-20-04/" rel="tag">ubuntu-20.04</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/vscode/" rel="tag">vscode</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/wasi/" rel="tag">wasi</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/wasi-sdk/" rel="tag">wasi-sdk</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/wasm/" rel="tag">wasm</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/wasm-libc/" rel="tag">wasm-libc</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Tag Cloud</h3>
+    <div class="widget tagcloud">
+      <a href="/blog/tags/7610/" style="font-size: 10px;">7610</a> <a href="/blog/tags/C/" style="font-size: 17.5px;">C</a> <a href="/blog/tags/DataFrame/" style="font-size: 12.5px;">DataFrame</a> <a href="/blog/tags/FinalizationRegistry/" style="font-size: 11.25px;">FinalizationRegistry</a> <a href="/blog/tags/JavaScript/" style="font-size: 18.75px;">JavaScript</a> <a href="/blog/tags/NegotiateStream/" style="font-size: 10px;">NegotiateStream</a> <a href="/blog/tags/Pydantic/" style="font-size: 10px;">Pydantic</a> <a href="/blog/tags/Python/" style="font-size: 10px;">Python</a> <a href="/blog/tags/Serialization/" style="font-size: 10px;">Serialization</a> <a href="/blog/tags/WebAssembly/" style="font-size: 20px;">WebAssembly</a> <a href="/blog/tags/array/" style="font-size: 13.75px;">array</a> <a href="/blog/tags/arrays/" style="font-size: 13.75px;">arrays</a> <a href="/blog/tags/asyncio/" style="font-size: 11.25px;">asyncio</a> <a href="/blog/tags/clang/" style="font-size: 16.25px;">clang</a> <a href="/blog/tags/cross-compile/" style="font-size: 11.25px;">cross-compile</a> <a href="/blog/tags/data/" style="font-size: 11.25px;">data</a> <a href="/blog/tags/dataframe/" style="font-size: 11.25px;">dataframe</a> <a href="/blog/tags/datascience/" style="font-size: 10px;">datascience</a> <a href="/blog/tags/dell/" style="font-size: 10px;">dell</a> <a href="/blog/tags/finalizer/" style="font-size: 11.25px;">finalizer</a> <a href="/blog/tags/inspiron/" style="font-size: 10px;">inspiron</a> <a href="/blog/tags/libc/" style="font-size: 12.5px;">libc</a> <a href="/blog/tags/linux/" style="font-size: 10px;">linux</a> <a href="/blog/tags/llvm/" style="font-size: 10px;">llvm</a> <a href="/blog/tags/malloc/" style="font-size: 10px;">malloc</a> <a href="/blog/tags/marshalling/" style="font-size: 12.5px;">marshalling</a> <a href="/blog/tags/memory/" style="font-size: 10px;">memory</a> <a href="/blog/tags/python/" style="font-size: 11.25px;">python</a> <a href="/blog/tags/science/" style="font-size: 11.25px;">science</a> <a href="/blog/tags/series/" style="font-size: 10px;">series</a> <a href="/blog/tags/ssl/" style="font-size: 10px;">ssl</a> <a href="/blog/tags/strings/" style="font-size: 11.25px;">strings</a> <a href="/blog/tags/ubuntu/" style="font-size: 10px;">ubuntu</a> <a href="/blog/tags/ubuntu-20-04/" style="font-size: 10px;">ubuntu-20.04</a> <a href="/blog/tags/vscode/" style="font-size: 10px;">vscode</a> <a href="/blog/tags/wasi/" style="font-size: 11.25px;">wasi</a> <a href="/blog/tags/wasi-sdk/" style="font-size: 15px;">wasi-sdk</a> <a href="/blog/tags/wasm/" style="font-size: 18.75px;">wasm</a> <a href="/blog/tags/wasm-libc/" style="font-size: 12.5px;">wasm-libc</a>
+    </div>
+  </div>
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Archives</h3>
+    <div class="widget">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2025/05/">May 2025</a></li><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2024/01/">January 2024</a></li><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2023/05/">May 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2022/12/">December 2022</a></li><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2021/12/">December 2021</a></li><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2021/07/">July 2021</a></li><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2020/07/">July 2020</a></li><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2020/06/">June 2020</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Recent Posts</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/blog/2025/05/03/pydantic-generic-serialization/">Serializing Pydantic with Metadata and Generic Fields</a>
+          </li>
+        
+          <li>
+            <a href="/blog/2024/01/24/wasm-gsl/">Revisiting WebAssembly Cross Compilation in January 2024</a>
+          </li>
+        
+          <li>
+            <a href="/blog/2023/05/23/python-start_tls/">Using asyncio start_tls in Python 3.11</a>
+          </li>
+        
+          <li>
+            <a href="/blog/2022/12/21/python-negotiatestream-client/">A Python client for .Net NegotiateStream</a>
+          </li>
+        
+          <li>
+            <a href="/blog/2021/12/19/dell-inspiron-7610-linux/">Setting up a Dell Inspiron 16 Plus (7610) for Linux</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      
+        <a rel="license noopener" target="_blank" href="http://creativecommons.org/licenses/by-nc-nd/4.0/"><img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by-nc-nd/4.0/88x31.png" /></a></br>
+All website licensed under <a href="https://creativecommons.org/licenses/by-nc-nd/4.0/" target="_blank">CC BY-NC-ND 4.0</a></br>
+      
+      &copy; 2025 Rob Blackbourn<br>
+      Powered by <a href="https://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/blog/" class="mobile-nav-link">Home</a>
+  
+    <a href="/blog/archives" class="mobile-nav-link">Archives</a>
+  
+</nav>
+    
+
+
+<script src="/blog/js/jquery-3.6.4.min.js"></script>
+
+
+
+  
+<script src="/blog/fancybox/jquery.fancybox.min.js"></script>
+
+
+
+
+<script src="/blog/js/script.js"></script>
+
+
+
+
+
+  </div>
+</body>
+</html>

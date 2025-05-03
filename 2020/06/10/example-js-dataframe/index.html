@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  
+  <title>An example of a pandas style DataFrame in JavaScript | Robs Blog</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta name="description" content="This post describes an example implementation of a pandas style DataFrame. Seehere for the sourcecode. The goal is to be able to do the following. 12345678const df &#x3D; DataFrame.fromObject(  [    &#123;">
+<meta property="og:type" content="article">
+<meta property="og:title" content="An example of a pandas style DataFrame in JavaScript">
+<meta property="og:url" content="https://rob-blackbourn.github.io/blog/2020/06/10/example-js-dataframe/index.html">
+<meta property="og:site_name" content="Robs Blog">
+<meta property="og:description" content="This post describes an example implementation of a pandas style DataFrame. Seehere for the sourcecode. The goal is to be able to do the following. 12345678const df &#x3D; DataFrame.fromObject(  [    &#123;">
+<meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2020-06-10T14:12:00.000Z">
+<meta property="article:modified_time" content="2025-05-03T11:02:32.756Z">
+<meta property="article:author" content="Rob Blackbourn">
+<meta property="article:tag" content="WebAssembly">
+<meta property="article:tag" content="JavaScript">
+<meta property="article:tag" content="dataframe">
+<meta name="twitter:card" content="summary">
+  
+    <link rel="alternate" href="/blog/atom.xml" title="Robs Blog" type="application/atom+xml">
+  
+  
+    <link rel="shortcut icon" href="/blog/favicon.png">
+  
+  
+  
+<link rel="stylesheet" href="/blog/css/style.css">
+
+  
+    
+<link rel="stylesheet" href="/blog/fancybox/jquery.fancybox.min.css">
+
+  
+  
+    
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fork-awesome@1.2.0/css/fork-awesome.min.css">
+
+  
+<meta name="generator" content="Hexo 7.0.0"></head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/blog/" id="logo">Robs Blog</a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"><span class="fa fa-bars"></span></a>
+        
+          <a class="main-nav-link" href="/blog/">Home</a>
+        
+          <a class="main-nav-link" href="/blog/archives">Archives</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+          
+            <a class="nav-icon" target="_blank" rel="noopener" href="https://github.com/rob-blackbourn"><span class="fa fa-github"></span></a>
+          
+            <a class="nav-icon" target="_blank" rel="noopener" href="https://www.linkedin.com/in/rob-blackbourn/"><span class="fa fa-linkedin"></span></a>
+          
+        
+        
+          <a class="nav-icon" href="/blog/atom.xml" title="RSS Feed"><span class="fa fa-rss"></span></a>
+        
+        <a class="nav-icon nav-search-btn" title="Search"><span class="fa fa-search"></span></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="https://rob-blackbourn.github.io/blog"></form>
+      </div>
+    </div>
+  </div>
+</header>
+
+      <div class="outer">
+        <section id="main"><article id="post-example-js-dataframe" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  <div class="article-meta">
+    <a href="/blog/2020/06/10/example-js-dataframe/" class="article-date">
+  <time class="dt-published" datetime="2020-06-10T14:12:00.000Z" itemprop="datePublished">2020-06-10</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/blog/categories/WebAssembly/">WebAssembly</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="p-name article-title" itemprop="headline name">
+      An example of a pandas style DataFrame in JavaScript
+    </h1>
+  
+
+      </header>
+    
+    <div class="e-content article-entry" itemprop="articleBody">
+      
+        <p>This post describes an example implementation of a pandas style DataFrame. See<br><a target="_blank" rel="noopener" href="https://github.com/rob-blackbourn/example-js-dataframe">here</a> for the source<br>code.</p>
+<p>The goal is to be able to do the following.</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> df = <span class="title class_">DataFrame</span>.<span class="title function_">fromObject</span>(</span><br><span class="line">  [</span><br><span class="line">    &#123; <span class="string">&#x27;col0&#x27;</span>: <span class="string">&#x27;a&#x27;</span>, <span class="string">&#x27;col1&#x27;</span>: <span class="number">5</span>, <span class="string">&#x27;col2&#x27;</span>: <span class="number">8.1</span> &#125;,</span><br><span class="line">    &#123; <span class="string">&#x27;col0&#x27;</span>: <span class="string">&#x27;b&#x27;</span>, <span class="string">&#x27;col1&#x27;</span>: <span class="number">6</span>, <span class="string">&#x27;col2&#x27;</span>: <span class="number">3.2</span> &#125;</span><br><span class="line">  ]</span><br><span class="line">)</span><br><span class="line"></span><br><span class="line">df[<span class="string">&#x27;col3&#x27;</span>] = df[<span class="string">&#x27;col1&#x27;</span>] + df[<span class="string">&#x27;col2&#x27;</span>]</span><br></pre></td></tr></table></figure>
+
+<p>In plain old JavaScript this is not possible. Let’s see how we can implement it.</p>
+<h2 id="The-goal"><a href="#The-goal" class="headerlink" title="The goal"></a>The goal</h2><p>So what is a <em>DataFrame</em>? To answer this we first need to look at a <em>Series</em>.</p>
+<h3 id="So-What-is-a-Series"><a href="#So-What-is-a-Series" class="headerlink" title="So What is a Series?"></a>So What is a Series?</h3><p>A <em>Series</em> is the building block of a <em>DataFrame</em>. I take a <em>Series</em> to be a<br>named vector (array), which will be initialized as follows.</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">let</span> s1 = <span class="keyword">new</span> <span class="title class_">Series</span>(<span class="string">&#x27;height&#x27;</span>, [<span class="number">1.82</span>, <span class="number">1.76</span>, <span class="number">1.72</span>, <span class="number">1.89</span>])</span><br></pre></td></tr></table></figure>
+
+<p>The series should be indexable.</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">s1[<span class="number">0</span>] === <span class="number">1.82</span></span><br></pre></td></tr></table></figure>
+
+<p>The series should support vector arithmetic.</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">let</span> height = <span class="keyword">new</span> <span class="title class_">Series</span>(<span class="string">&#x27;height&#x27;</span>, [<span class="number">1.82</span>, <span class="number">1.76</span>, <span class="number">1.72</span>, <span class="number">1.89</span>])</span><br><span class="line"><span class="keyword">let</span> weight = <span class="keyword">new</span> <span class="title class_">Series</span>(<span class="string">&#x27;weight&#x27;</span>, [<span class="number">81.3</span>, <span class="number">73.2</span>, <span class="number">68.9</span>, <span class="number">92.1</span>])</span><br><span class="line"><span class="keyword">let</span> score = height / weight</span><br></pre></td></tr></table></figure>
+
+<h3 id="So-What-is-a-DataFrame"><a href="#So-What-is-a-DataFrame" class="headerlink" title="So What is a DataFrame?"></a>So What is a DataFrame?</h3><p>I take a <em>DataFrame</em> to be a collection of <em>Series</em>.</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">let</span> df = <span class="title class_">DataFrame</span>([</span><br><span class="line">  height,</span><br><span class="line">  weight</span><br><span class="line">])</span><br></pre></td></tr></table></figure>
+
+<h2 id="The-problems-to-solve"><a href="#The-problems-to-solve" class="headerlink" title="The problems to solve"></a>The problems to solve</h2><p>There are two problems to solve in order to implement this in JavaScript:</p>
+<ul>
+<li>Operator overloading</li>
+<li>Property accessing</li>
+</ul>
+<h3 id="Operator-Overloading"><a href="#Operator-Overloading" class="headerlink" title="Operator Overloading"></a>Operator Overloading</h3><p>We want to support vector arithmetic (multiplying two arrays). Unfortunately<br>JavaScript does not support operator overloading so we will have to pre-process<br>the code. We can do this with the <a target="_blank" rel="noopener" href="https://babeljs.io/">babel</a> transpiler<br>and a plugin. I’m using the<br><a target="_blank" rel="noopener" href="https://github.com/rob-blackbourn/jetblack-operator-overloading">@jetblack&#x2F;operator-overloading</a><br>plugin, which is a bag-of-bolts, but I wrote it so I know how it works! </p>
+<h3 id="Property-accessing"><a href="#Property-accessing" class="headerlink" title="Property accessing"></a>Property accessing</h3><p>In order for a series to have both a name and be indexable we need control over<br>the property accessing. We can do that with a<br><a target="_blank" rel="noopener" href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Proxy">Proxy</a><br>object. The <code>Proxy</code> object provides a layer of indirection between requests on<br>the object, and the actions performed.</p>
+<h2 id="Setting-up-your-environment"><a href="#Setting-up-your-environment" class="headerlink" title="Setting up your environment"></a>Setting up your environment</h2><p>Lets write some code!</p>
+<p>First install the node modules. I’m using babel, the operator overloading<br>plugin, and<br><a target="_blank" rel="noopener" href="https://standardjs.com/">standardjs</a> as a linter and formatter.</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># Initialise the package.json</span></span><br><span class="line">npm init -y</span><br><span class="line"><span class="comment"># Install the babel tool chain.</span></span><br><span class="line">npm install --save-dev @babel/core@7.10.1 @babel/preset-env@7.10.2 @babel/cli@7.10.1 @babel/node@7.10.1</span><br><span class="line"><span class="comment"># Install the operator overloading plugin.</span></span><br><span class="line">npm install --save-dev git+https://github.com/rob-blackbourn/jetblack-operator-overloading.git<span class="comment">#0.1.0</span></span><br><span class="line"><span class="comment"># Install standardjs for linting and formatting</span></span><br><span class="line">npm install --save-dev babel-eslint@10.1.0 standard@14.3.4</span><br></pre></td></tr></table></figure>
+
+<p>We configure standardjs by editing the package.json and adding the following.</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="punctuation">&#123;</span></span><br><span class="line">  ...</span><br><span class="line">  <span class="attr">&quot;standard&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">    <span class="attr">&quot;parser&quot;</span><span class="punctuation">:</span> <span class="string">&quot;babel-eslint&quot;</span></span><br><span class="line">  <span class="punctuation">&#125;</span></span><br><span class="line"><span class="punctuation">&#125;</span></span><br></pre></td></tr></table></figure>
+
+<p>If you are using using vscode create the <code>.vscode/settings.json</code> as follows<br>then restart vscode to start the standardjs server.</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="punctuation">&#123;</span></span><br><span class="line">  <span class="attr">&quot;javascript.validate.enable&quot;</span><span class="punctuation">:</span> <span class="literal"><span class="keyword">false</span></span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;standard.enable&quot;</span><span class="punctuation">:</span> <span class="literal"><span class="keyword">true</span></span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;standard.autoFixOnSave&quot;</span><span class="punctuation">:</span> <span class="literal"><span class="keyword">true</span></span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;[javascript]&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">    <span class="attr">&quot;editor.formatOnSave&quot;</span><span class="punctuation">:</span> <span class="literal"><span class="keyword">false</span></span></span><br><span class="line">  <span class="punctuation">&#125;</span></span><br><span class="line"><span class="punctuation">&#125;</span></span><br></pre></td></tr></table></figure>
+
+<p>Configure babel by creating the <code>.bablerc</code> file with the usual preset and the<br>operator overloading plugin. The operator overloading plugin requires arrow<br>functions. Targeting <code>node</code> (or any modern browser) achieves this.</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="punctuation">&#123;</span></span><br><span class="line">  <span class="attr">&quot;presets&quot;</span><span class="punctuation">:</span> <span class="punctuation">[</span></span><br><span class="line">      <span class="punctuation">[</span><span class="string">&quot;@babel/preset-env&quot;</span><span class="punctuation">,</span> <span class="punctuation">&#123;</span></span><br><span class="line">        <span class="attr">&quot;targets&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">          <span class="attr">&quot;node&quot;</span><span class="punctuation">:</span> <span class="string">&quot;current&quot;</span></span><br><span class="line">        <span class="punctuation">&#125;</span></span><br><span class="line">      <span class="punctuation">&#125;</span><span class="punctuation">]</span></span><br><span class="line">  <span class="punctuation">]</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;plugins&quot;</span><span class="punctuation">:</span> <span class="punctuation">[</span><span class="string">&quot;module:@jetblack/operator-overloading&quot;</span><span class="punctuation">]</span></span><br><span class="line"><span class="punctuation">&#125;</span></span><br></pre></td></tr></table></figure>
+
+<p>Edit the <code>package.json</code> and add some scripts for building the transpiled code<br>and running it.</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="punctuation">&#123;</span></span><br><span class="line">  ...</span><br><span class="line">  <span class="attr">&quot;scripts&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">    <span class="attr">&quot;build&quot;</span><span class="punctuation">:</span> <span class="string">&quot;babel src --out-dir=dist --source-maps&quot;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;start&quot;</span><span class="punctuation">:</span> <span class="string">&quot;node dist/main.js&quot;</span></span><br><span class="line">  <span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">  ...</span><br><span class="line"><span class="punctuation">&#125;</span></span><br></pre></td></tr></table></figure>
+
+<h2 id="The-Implementation"><a href="#The-Implementation" class="headerlink" title="The Implementation"></a>The Implementation</h2><p>Put the code in a subdirectory called <code>src</code>.</p>
+<h3 id="Series-Code"><a href="#Series-Code" class="headerlink" title="Series Code"></a>Series Code</h3><p>In the <code>src</code> directory create a file called <code>Series.js</code> with the following<br>content.</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">export</span> <span class="keyword">class</span> <span class="title class_">Series</span> &#123;</span><br><span class="line">  <span class="title function_">constructor</span> (name, array) &#123;</span><br><span class="line">    <span class="variable language_">this</span>.<span class="property">name</span> = name</span><br><span class="line">    <span class="variable language_">this</span>.<span class="property">array</span> = array</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">new</span> <span class="title class_">Proxy</span>(<span class="variable language_">this</span>, &#123;</span><br><span class="line">      <span class="attr">get</span>: <span class="function">(<span class="params">obj, prop, receiver</span>) =&gt;</span> &#123;</span><br><span class="line">        <span class="keyword">if</span> (prop <span class="keyword">in</span> obj) &#123;</span><br><span class="line">          <span class="keyword">return</span> <span class="title class_">Reflect</span>.<span class="title function_">get</span>(obj, prop, receiver)</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">          <span class="keyword">return</span> <span class="title class_">Reflect</span>.<span class="title function_">get</span>(obj.<span class="property">array</span>, prop, receiver.<span class="property">array</span>)</span><br><span class="line">        &#125;</span><br><span class="line">      &#125;,</span><br><span class="line">      <span class="attr">set</span>: <span class="function">(<span class="params">obj, prop, value, receiver</span>) =&gt;</span> &#123;</span><br><span class="line">        <span class="keyword">if</span> (prop <span class="keyword">in</span> obj) &#123;</span><br><span class="line">          <span class="keyword">return</span> <span class="title class_">Reflect</span>.<span class="title function_">set</span>(obj, prop, value, receiver)</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">          <span class="keyword">return</span> <span class="title class_">Reflect</span>.<span class="title function_">set</span>(obj.<span class="property">array</span>, prop, value, receiver.<span class="property">array</span>)</span><br><span class="line">        &#125;</span><br><span class="line">      &#125;,</span><br><span class="line">      <span class="attr">apply</span>: <span class="function">(<span class="params">target, thisArgument, argumentList</span>) =&gt;</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="title class_">Reflect</span>.<span class="title function_">apply</span>(target, thisArgument, argumentList)</span><br><span class="line">      &#125;,</span><br><span class="line">      <span class="attr">defineProperty</span>: <span class="title class_">Reflect</span>.<span class="property">defineProperty</span>,</span><br><span class="line">      <span class="attr">getOwnPropertyDescriptor</span>: <span class="title class_">Reflect</span>.<span class="property">getOwnPropertyDescriptor</span>,</span><br><span class="line">      <span class="attr">deleteProperty</span>: <span class="title class_">Reflect</span>.<span class="property">deleteProperty</span>,</span><br><span class="line">      <span class="attr">getPrototypeOf</span>: <span class="title class_">Reflect</span>.<span class="property">getPrototypeOf</span>,</span><br><span class="line">      <span class="attr">setPrototypeOf</span>: <span class="title class_">Reflect</span>.<span class="property">setPrototypeOf</span>,</span><br><span class="line">      <span class="attr">isExtensible</span>: <span class="title class_">Reflect</span>.<span class="property">isExtensible</span>,</span><br><span class="line">      <span class="attr">preventExtensions</span>: <span class="title class_">Reflect</span>.<span class="property">preventExtensions</span>,</span><br><span class="line">      <span class="attr">has</span>: <span class="title class_">Reflect</span>.<span class="property">has</span>,</span><br><span class="line">      <span class="attr">ownKeys</span>: <span class="title class_">Reflect</span>.<span class="property">ownKeys</span></span><br><span class="line">    &#125;)</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  [<span class="title class_">Symbol</span>.<span class="title function_">for</span>(<span class="string">&#x27;+&#x27;</span>)] (other) &#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">new</span> <span class="title class_">Series</span>(</span><br><span class="line">      <span class="string">`<span class="subst">$&#123;<span class="variable language_">this</span>.name&#125;</span>+<span class="subst">$&#123;other.name&#125;</span>`</span>,</span><br><span class="line">      <span class="variable language_">this</span>.<span class="property">array</span>.<span class="title function_">map</span>(<span class="function">(<span class="params">value, index</span>) =&gt;</span> value + other.<span class="property">array</span>[index])</span><br><span class="line">    )</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  [<span class="title class_">Symbol</span>.<span class="title function_">for</span>(<span class="string">&#x27;-&#x27;</span>)] (other) &#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">new</span> <span class="title class_">Series</span>(</span><br><span class="line">      <span class="string">`<span class="subst">$&#123;<span class="variable language_">this</span>.name&#125;</span>-<span class="subst">$&#123;other.name&#125;</span>`</span>,</span><br><span class="line">      <span class="variable language_">this</span>.<span class="property">array</span>.<span class="title function_">map</span>(<span class="function">(<span class="params">value, index</span>) =&gt;</span> value - other.<span class="property">array</span>[index])</span><br><span class="line">    )</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  [<span class="title class_">Symbol</span>.<span class="title function_">for</span>(<span class="string">&#x27;*&#x27;</span>)] (other) &#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">new</span> <span class="title class_">Series</span>(</span><br><span class="line">      <span class="string">`<span class="subst">$&#123;<span class="variable language_">this</span>.name&#125;</span>*<span class="subst">$&#123;other.name&#125;</span>`</span>,</span><br><span class="line">      <span class="variable language_">this</span>.<span class="property">array</span>.<span class="title function_">map</span>(<span class="function">(<span class="params">value, index</span>) =&gt;</span> value * other.<span class="property">array</span>[index])</span><br><span class="line">    )</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  [<span class="title class_">Symbol</span>.<span class="title function_">for</span>(<span class="string">&#x27;/&#x27;</span>)] (other) &#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">new</span> <span class="title class_">Series</span>(</span><br><span class="line">      <span class="string">`<span class="subst">$&#123;<span class="variable language_">this</span>.name&#125;</span>/<span class="subst">$&#123;other.name&#125;</span>`</span>,</span><br><span class="line">      <span class="variable language_">this</span>.<span class="property">array</span>.<span class="title function_">map</span>(<span class="function">(<span class="params">value, index</span>) =&gt;</span> value / other.<span class="property">array</span>[index])</span><br><span class="line">    )</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  toString () &#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="string">`(<span class="subst">$&#123;<span class="variable language_">this</span>.name&#125;</span>): <span class="subst">$&#123;<span class="variable language_">this</span>.array.join(<span class="string">&#x27;, &#x27;</span>)&#125;</span>`</span></span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>The code can be split into two parts.</p>
+<p>The constructor returns a <code>Proxy</code><br>object, which  intercepts calls to the Series. It first checks if the property<br>or function is provided by the Series itself. If not it delegates the action<br>to the array. Note how the <code>Proxy</code> is returned from the constructor; this is a<br>poorly documented feature.</p>
+<p>The operators are provided by the <code>[Symbol.for(&#39;+&#39;)]</code> methods.</p>
+<h3 id="DataFrame-Code"><a href="#DataFrame-Code" class="headerlink" title="DataFrame Code"></a>DataFrame Code</h3><p>In the <code>src</code> directory create a file called <code>DataFrame.js</code> with the following<br>content.</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> &#123; <span class="title class_">Series</span> &#125; <span class="keyword">from</span> <span class="string">&#x27;./Series&#x27;</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">export</span> <span class="keyword">class</span> <span class="title class_">DataFrame</span> &#123;</span><br><span class="line">  <span class="title function_">constructor</span> (series) &#123;</span><br><span class="line">    <span class="variable language_">this</span>.<span class="property">series</span> = &#123;&#125;</span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">const</span> item <span class="keyword">of</span> series) &#123;</span><br><span class="line">      <span class="variable language_">this</span>.<span class="property">series</span>[item.<span class="property">name</span>] = item</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">new</span> <span class="title class_">Proxy</span>(<span class="variable language_">this</span>, &#123;</span><br><span class="line">      <span class="attr">get</span>: <span class="function">(<span class="params">obj, prop, receiver</span>) =&gt;</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> prop <span class="keyword">in</span> obj ? <span class="title class_">Reflect</span>.<span class="title function_">get</span>(obj, prop, receiver) : <span class="title class_">Reflect</span>.<span class="title function_">get</span>(obj.<span class="property">series</span>, prop, receiver.<span class="property">series</span>)</span><br><span class="line">      &#125;,</span><br><span class="line">      <span class="attr">set</span>: <span class="function">(<span class="params">obj, prop, value, receiver</span>) =&gt;</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> prop <span class="keyword">in</span> obj ? <span class="title class_">Reflect</span>.<span class="title function_">set</span>(obj, prop, value, receiver) : <span class="title class_">Reflect</span>.<span class="title function_">set</span>(obj.<span class="property">series</span>, prop, value, receiver.<span class="property">series</span>)</span><br><span class="line">      &#125;,</span><br><span class="line">      <span class="attr">apply</span>: <span class="function">(<span class="params">target, thisArgument, argumentList</span>) =&gt;</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> target <span class="keyword">in</span> thisArgument ? <span class="title class_">Reflect</span>.<span class="title function_">apply</span>(target, thisArgument, argumentList) : <span class="title class_">Reflect</span>.<span class="title function_">apply</span>(target, thisArgument.<span class="property">array</span>, argumentList)</span><br><span class="line">      &#125;,</span><br><span class="line">      <span class="attr">defineProperty</span>: <span class="title class_">Reflect</span>.<span class="property">defineProperty</span>,</span><br><span class="line">      <span class="attr">getOwnPropertyDescriptor</span>: <span class="title class_">Reflect</span>.<span class="property">getOwnPropertyDescriptor</span>,</span><br><span class="line">      <span class="attr">deleteProperty</span>: <span class="title class_">Reflect</span>.<span class="property">deleteProperty</span>,</span><br><span class="line">      <span class="attr">getPrototypeOf</span>: <span class="title class_">Reflect</span>.<span class="property">getPrototypeOf</span>,</span><br><span class="line">      <span class="attr">setPrototypeOf</span>: <span class="title class_">Reflect</span>.<span class="property">setPrototypeOf</span>,</span><br><span class="line">      <span class="attr">isExtensible</span>: <span class="title class_">Reflect</span>.<span class="property">isExtensible</span>,</span><br><span class="line">      <span class="attr">preventExtensions</span>: <span class="title class_">Reflect</span>.<span class="property">preventExtensions</span>,</span><br><span class="line">      <span class="attr">has</span>: <span class="title class_">Reflect</span>.<span class="property">has</span>,</span><br><span class="line">      <span class="attr">ownKeys</span>: <span class="title class_">Reflect</span>.<span class="property">ownKeys</span></span><br><span class="line">    &#125;)</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">static</span> fromObject (data) &#123;</span><br><span class="line">    <span class="keyword">const</span> series = &#123;&#125;</span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">let</span> i = <span class="number">0</span>; i &lt; data.<span class="property">length</span>; i++) &#123;</span><br><span class="line">      <span class="keyword">for</span> (<span class="keyword">const</span> column <span class="keyword">in</span> data[i]) &#123;</span><br><span class="line">        <span class="keyword">if</span> (!(column <span class="keyword">in</span> series)) &#123;</span><br><span class="line">          series[column] = <span class="keyword">new</span> <span class="title class_">Series</span>(column, <span class="keyword">new</span> <span class="title class_">Array</span>(data.<span class="property">length</span>))</span><br><span class="line">        &#125;</span><br><span class="line">        series[column][i] = data[i][column]</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">const</span> seriesList = <span class="title class_">Object</span>.<span class="title function_">values</span>(series)</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">new</span> <span class="title class_">DataFrame</span>(seriesList)</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  toString () &#123;</span><br><span class="line">    <span class="keyword">const</span> columns = <span class="title class_">Object</span>.<span class="title function_">getOwnPropertyNames</span>(<span class="variable language_">this</span>.<span class="property">series</span>)</span><br><span class="line">    <span class="keyword">let</span> s = columns.<span class="title function_">join</span>(<span class="string">&#x27;, &#x27;</span>) + <span class="string">&#x27;\n&#x27;</span></span><br><span class="line">    <span class="keyword">const</span> maxLength = <span class="title class_">Object</span>.<span class="title function_">values</span>(<span class="variable language_">this</span>.<span class="property">series</span>)</span><br><span class="line">      .<span class="title function_">map</span>(<span class="function"><span class="params">x</span> =&gt;</span> x.<span class="property">length</span>)</span><br><span class="line">      .<span class="title function_">reduce</span>(<span class="function">(<span class="params">accumulator, currentValue</span>) =&gt;</span> <span class="title class_">Math</span>.<span class="title function_">max</span>(accumulator, currentValue), <span class="number">0</span>)</span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">let</span> i = <span class="number">0</span>; i &lt; maxLength; i++) &#123;</span><br><span class="line">      <span class="keyword">const</span> row = []</span><br><span class="line">      <span class="keyword">for</span> (<span class="keyword">const</span> column <span class="keyword">of</span> columns) &#123;</span><br><span class="line">        <span class="keyword">if</span> (i &lt; <span class="variable language_">this</span>.<span class="property">series</span>[column].<span class="property">length</span>) &#123;</span><br><span class="line">          row.<span class="title function_">push</span>(<span class="variable language_">this</span>.<span class="property">series</span>[column][i])</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">          row.<span class="title function_">push</span>(<span class="literal">null</span>)</span><br><span class="line">        &#125;</span><br><span class="line">      &#125;</span><br><span class="line">      s += row.<span class="title function_">join</span>(<span class="string">&#x27;, &#x27;</span>) + <span class="string">&#x27;\n&#x27;</span></span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> s</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>This would be pretty short without the <code>toString</code>!</p>
+<p>As with the <code>Series</code> class we use a <code>Proxy</code> object to control property<br>accessing.</p>
+<p>I decided to keep the constructor clean; it just takes an array<br>of <code>Series</code>. However, in the real world we want a variety of constructors. The<br>convenience class method <code>DataFrame.fromObject</code> provides a way of building the series from<br>a list of objects.</p>
+<h2 id="Try-it-out"><a href="#Try-it-out" class="headerlink" title="Try it out"></a>Try it out</h2><p>Let’s start with a series.</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="string">&#x27;operator-overloading enabled&#x27;</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> &#123; <span class="title class_">Series</span> &#125; <span class="keyword">from</span> <span class="string">&#x27;./Series&#x27;</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> height = <span class="keyword">new</span> <span class="title class_">Series</span>(<span class="string">&#x27;height&#x27;</span>, [<span class="number">1.82</span>, <span class="number">1.72</span>, <span class="number">1.64</span>, <span class="number">1.88</span>])</span><br><span class="line"><span class="keyword">const</span> weight = <span class="keyword">new</span> <span class="title class_">Series</span>(<span class="string">&#x27;weight&#x27;</span>, [<span class="number">81.4</span>, <span class="number">72.3</span>, <span class="number">69.9</span>, <span class="number">79.5</span>])</span><br><span class="line"><span class="keyword">const</span> ratio = weight / height</span><br><span class="line"><span class="variable language_">console</span>.<span class="title function_">log</span>(ratio.<span class="title function_">toString</span>())</span><br><span class="line"></span><br><span class="line">&gt; (weight/height): <span class="number">44.72527472527473</span>, <span class="number">42.03488372093023</span>, <span class="number">42.6219512195122</span>, <span class="number">42.287234042553195</span></span><br></pre></td></tr></table></figure>
+
+<p>And let’s try using array methods to see if the request gets forwarded by the<br>proxy to the array.</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> &#123; <span class="title class_">Series</span> &#125; <span class="keyword">from</span> <span class="string">&#x27;./Series&#x27;</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> s1 = <span class="keyword">new</span> <span class="title class_">Series</span>(<span class="string">&#x27;numbers&#x27;</span>, [<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>])</span><br><span class="line">s1.<span class="title function_">push</span>(<span class="number">5</span>)</span><br><span class="line"><span class="variable language_">console</span>.<span class="title function_">log</span>(s1.<span class="title function_">toString</span>())</span><br><span class="line"></span><br><span class="line">&gt; (numbers): <span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, <span class="number">5</span></span><br></pre></td></tr></table></figure>
+
+<p>Finally let’s test the DataFrame.</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="string">&#x27;operator-overloading enabled&#x27;</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> &#123; <span class="title class_">DataFrame</span> &#125; <span class="keyword">from</span> <span class="string">&#x27;./DataFrame&#x27;</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> df = <span class="title class_">DataFrame</span>.<span class="title function_">fromObject</span>(</span><br><span class="line">  [</span><br><span class="line">    &#123; <span class="attr">col0</span>: <span class="string">&#x27;a&#x27;</span>, <span class="attr">col1</span>: <span class="number">5</span>, <span class="attr">col2</span>: <span class="number">8.1</span> &#125;,</span><br><span class="line">    &#123; <span class="attr">col0</span>: <span class="string">&#x27;b&#x27;</span>, <span class="attr">col1</span>: <span class="number">6</span>, <span class="attr">col2</span>: <span class="number">3.2</span> &#125;</span><br><span class="line">  ]</span><br><span class="line">)</span><br><span class="line"><span class="variable language_">console</span>.<span class="title function_">log</span>(df.<span class="title function_">toString</span>())</span><br><span class="line">&gt; col0, col1, col2</span><br><span class="line">&gt; a, <span class="number">5</span>, <span class="number">8.1</span></span><br><span class="line">&gt; b, <span class="number">6</span>, <span class="number">3.2</span></span><br><span class="line"></span><br><span class="line">df[<span class="string">&#x27;col3&#x27;</span>] = df[<span class="string">&#x27;col1&#x27;</span>] + df[<span class="string">&#x27;col2&#x27;</span>]</span><br><span class="line"><span class="variable language_">console</span>.<span class="title function_">log</span>(df.<span class="title function_">toString</span>())</span><br><span class="line">&gt; col0, col1, col2, col3</span><br><span class="line">&gt; a, <span class="number">5</span>, <span class="number">8.1</span>, <span class="number">13.1</span></span><br><span class="line">&gt; b, <span class="number">6</span>, <span class="number">3.2</span>, <span class="number">9.2</span></span><br></pre></td></tr></table></figure>
+
+<h2 id="Thoughts"><a href="#Thoughts" class="headerlink" title="Thoughts"></a>Thoughts</h2><p>Obviously there’s a lot  in a pandas DataFrame not covered here, but I think<br>this demonstrates how the basic syntax could be achieved.</p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="https://rob-blackbourn.github.io/blog/2020/06/10/example-js-dataframe/" data-id="cma87l7fz0003wrjp8e4ldn42" data-title="An example of a pandas style DataFrame in JavaScript" class="article-share-link"><span class="fa fa-share">Share</span></a>
+      
+      
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/blog/tags/JavaScript/" rel="tag">JavaScript</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/blog/tags/WebAssembly/" rel="tag">WebAssembly</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/blog/tags/dataframe/" rel="tag">dataframe</a></li></ul>
+
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/blog/2020/06/10/simplifyinf-memory-management/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Newer</strong>
+      <div class="article-nav-title">
+        
+          Simplifying WebAssembly C Memory Management by Using Clang Builtin&#39;s
+        
+      </div>
+    </a>
+  
+  
+    <a href="/blog/2020/06/07/wasm-arrays/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">Passing arrays between wasm and JavaScript</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Categories</h3>
+    <div class="widget">
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/blog/categories/Admin/">Admin</a></li><li class="category-list-item"><a class="category-list-link" href="/blog/categories/Python/">Python</a></li><li class="category-list-item"><a class="category-list-link" href="/blog/categories/Serialization/">Serialization</a></li><li class="category-list-item"><a class="category-list-link" href="/blog/categories/WebAssembly/">WebAssembly</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Tags</h3>
+    <div class="widget">
+      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/7610/" rel="tag">7610</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/C/" rel="tag">C</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/DataFrame/" rel="tag">DataFrame</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/FinalizationRegistry/" rel="tag">FinalizationRegistry</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/JavaScript/" rel="tag">JavaScript</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/NegotiateStream/" rel="tag">NegotiateStream</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/Pydantic/" rel="tag">Pydantic</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/Python/" rel="tag">Python</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/Serialization/" rel="tag">Serialization</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/WebAssembly/" rel="tag">WebAssembly</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/array/" rel="tag">array</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/arrays/" rel="tag">arrays</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/asyncio/" rel="tag">asyncio</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/clang/" rel="tag">clang</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/cross-compile/" rel="tag">cross-compile</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/data/" rel="tag">data</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/dataframe/" rel="tag">dataframe</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/datascience/" rel="tag">datascience</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/dell/" rel="tag">dell</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/finalizer/" rel="tag">finalizer</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/inspiron/" rel="tag">inspiron</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/libc/" rel="tag">libc</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/linux/" rel="tag">linux</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/llvm/" rel="tag">llvm</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/malloc/" rel="tag">malloc</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/marshalling/" rel="tag">marshalling</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/memory/" rel="tag">memory</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/python/" rel="tag">python</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/science/" rel="tag">science</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/series/" rel="tag">series</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/ssl/" rel="tag">ssl</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/strings/" rel="tag">strings</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/ubuntu/" rel="tag">ubuntu</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/ubuntu-20-04/" rel="tag">ubuntu-20.04</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/vscode/" rel="tag">vscode</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/wasi/" rel="tag">wasi</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/wasi-sdk/" rel="tag">wasi-sdk</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/wasm/" rel="tag">wasm</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/wasm-libc/" rel="tag">wasm-libc</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Tag Cloud</h3>
+    <div class="widget tagcloud">
+      <a href="/blog/tags/7610/" style="font-size: 10px;">7610</a> <a href="/blog/tags/C/" style="font-size: 17.5px;">C</a> <a href="/blog/tags/DataFrame/" style="font-size: 12.5px;">DataFrame</a> <a href="/blog/tags/FinalizationRegistry/" style="font-size: 11.25px;">FinalizationRegistry</a> <a href="/blog/tags/JavaScript/" style="font-size: 18.75px;">JavaScript</a> <a href="/blog/tags/NegotiateStream/" style="font-size: 10px;">NegotiateStream</a> <a href="/blog/tags/Pydantic/" style="font-size: 10px;">Pydantic</a> <a href="/blog/tags/Python/" style="font-size: 10px;">Python</a> <a href="/blog/tags/Serialization/" style="font-size: 10px;">Serialization</a> <a href="/blog/tags/WebAssembly/" style="font-size: 20px;">WebAssembly</a> <a href="/blog/tags/array/" style="font-size: 13.75px;">array</a> <a href="/blog/tags/arrays/" style="font-size: 13.75px;">arrays</a> <a href="/blog/tags/asyncio/" style="font-size: 11.25px;">asyncio</a> <a href="/blog/tags/clang/" style="font-size: 16.25px;">clang</a> <a href="/blog/tags/cross-compile/" style="font-size: 11.25px;">cross-compile</a> <a href="/blog/tags/data/" style="font-size: 11.25px;">data</a> <a href="/blog/tags/dataframe/" style="font-size: 11.25px;">dataframe</a> <a href="/blog/tags/datascience/" style="font-size: 10px;">datascience</a> <a href="/blog/tags/dell/" style="font-size: 10px;">dell</a> <a href="/blog/tags/finalizer/" style="font-size: 11.25px;">finalizer</a> <a href="/blog/tags/inspiron/" style="font-size: 10px;">inspiron</a> <a href="/blog/tags/libc/" style="font-size: 12.5px;">libc</a> <a href="/blog/tags/linux/" style="font-size: 10px;">linux</a> <a href="/blog/tags/llvm/" style="font-size: 10px;">llvm</a> <a href="/blog/tags/malloc/" style="font-size: 10px;">malloc</a> <a href="/blog/tags/marshalling/" style="font-size: 12.5px;">marshalling</a> <a href="/blog/tags/memory/" style="font-size: 10px;">memory</a> <a href="/blog/tags/python/" style="font-size: 11.25px;">python</a> <a href="/blog/tags/science/" style="font-size: 11.25px;">science</a> <a href="/blog/tags/series/" style="font-size: 10px;">series</a> <a href="/blog/tags/ssl/" style="font-size: 10px;">ssl</a> <a href="/blog/tags/strings/" style="font-size: 11.25px;">strings</a> <a href="/blog/tags/ubuntu/" style="font-size: 10px;">ubuntu</a> <a href="/blog/tags/ubuntu-20-04/" style="font-size: 10px;">ubuntu-20.04</a> <a href="/blog/tags/vscode/" style="font-size: 10px;">vscode</a> <a href="/blog/tags/wasi/" style="font-size: 11.25px;">wasi</a> <a href="/blog/tags/wasi-sdk/" style="font-size: 15px;">wasi-sdk</a> <a href="/blog/tags/wasm/" style="font-size: 18.75px;">wasm</a> <a href="/blog/tags/wasm-libc/" style="font-size: 12.5px;">wasm-libc</a>
+    </div>
+  </div>
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Archives</h3>
+    <div class="widget">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2025/05/">May 2025</a></li><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2024/01/">January 2024</a></li><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2023/05/">May 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2022/12/">December 2022</a></li><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2021/12/">December 2021</a></li><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2021/07/">July 2021</a></li><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2020/07/">July 2020</a></li><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2020/06/">June 2020</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Recent Posts</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/blog/2025/05/03/pydantic-generic-serialization/">Serializing Pydantic with Metadata and Generic Fields</a>
+          </li>
+        
+          <li>
+            <a href="/blog/2024/01/24/wasm-gsl/">Revisiting WebAssembly Cross Compilation in January 2024</a>
+          </li>
+        
+          <li>
+            <a href="/blog/2023/05/23/python-start_tls/">Using asyncio start_tls in Python 3.11</a>
+          </li>
+        
+          <li>
+            <a href="/blog/2022/12/21/python-negotiatestream-client/">A Python client for .Net NegotiateStream</a>
+          </li>
+        
+          <li>
+            <a href="/blog/2021/12/19/dell-inspiron-7610-linux/">Setting up a Dell Inspiron 16 Plus (7610) for Linux</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      
+        <a rel="license noopener" target="_blank" href="http://creativecommons.org/licenses/by-nc-nd/4.0/"><img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by-nc-nd/4.0/88x31.png" /></a></br>
+All website licensed under <a href="https://creativecommons.org/licenses/by-nc-nd/4.0/" target="_blank">CC BY-NC-ND 4.0</a></br>
+      
+      &copy; 2025 Rob Blackbourn<br>
+      Powered by <a href="https://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/blog/" class="mobile-nav-link">Home</a>
+  
+    <a href="/blog/archives" class="mobile-nav-link">Archives</a>
+  
+</nav>
+    
+
+
+<script src="/blog/js/jquery-3.6.4.min.js"></script>
+
+
+
+  
+<script src="/blog/fancybox/jquery.fancybox.min.js"></script>
+
+
+
+
+<script src="/blog/js/script.js"></script>
+
+
+
+
+
+  </div>
+</body>
+</html>

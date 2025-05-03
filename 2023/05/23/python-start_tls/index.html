@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  
+  <title>Using asyncio start_tls in Python 3.11 | Robs Blog</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta name="description" content="An upgradable stream starts life as a plain old socket connection, but is capable of being “upgraded” to use Transport Layer Security (TLS). This is sometimes known as STARTTLS. Common examples of thi">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Using asyncio start_tls in Python 3.11">
+<meta property="og:url" content="https://rob-blackbourn.github.io/blog/2023/05/23/python-start_tls/index.html">
+<meta property="og:site_name" content="Robs Blog">
+<meta property="og:description" content="An upgradable stream starts life as a plain old socket connection, but is capable of being “upgraded” to use Transport Layer Security (TLS). This is sometimes known as STARTTLS. Common examples of thi">
+<meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2023-05-23T08:15:00.000Z">
+<meta property="article:modified_time" content="2025-05-03T11:02:32.758Z">
+<meta property="article:author" content="Rob Blackbourn">
+<meta property="article:tag" content="python">
+<meta property="article:tag" content="asyncio">
+<meta property="article:tag" content="ssl">
+<meta name="twitter:card" content="summary">
+  
+    <link rel="alternate" href="/blog/atom.xml" title="Robs Blog" type="application/atom+xml">
+  
+  
+    <link rel="shortcut icon" href="/blog/favicon.png">
+  
+  
+  
+<link rel="stylesheet" href="/blog/css/style.css">
+
+  
+    
+<link rel="stylesheet" href="/blog/fancybox/jquery.fancybox.min.css">
+
+  
+  
+    
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fork-awesome@1.2.0/css/fork-awesome.min.css">
+
+  
+<meta name="generator" content="Hexo 7.0.0"></head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/blog/" id="logo">Robs Blog</a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"><span class="fa fa-bars"></span></a>
+        
+          <a class="main-nav-link" href="/blog/">Home</a>
+        
+          <a class="main-nav-link" href="/blog/archives">Archives</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+          
+            <a class="nav-icon" target="_blank" rel="noopener" href="https://github.com/rob-blackbourn"><span class="fa fa-github"></span></a>
+          
+            <a class="nav-icon" target="_blank" rel="noopener" href="https://www.linkedin.com/in/rob-blackbourn/"><span class="fa fa-linkedin"></span></a>
+          
+        
+        
+          <a class="nav-icon" href="/blog/atom.xml" title="RSS Feed"><span class="fa fa-rss"></span></a>
+        
+        <a class="nav-icon nav-search-btn" title="Search"><span class="fa fa-search"></span></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="https://rob-blackbourn.github.io/blog"></form>
+      </div>
+    </div>
+  </div>
+</header>
+
+      <div class="outer">
+        <section id="main"><article id="post-python-start_tls" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  <div class="article-meta">
+    <a href="/blog/2023/05/23/python-start_tls/" class="article-date">
+  <time class="dt-published" datetime="2023-05-23T08:15:00.000Z" itemprop="datePublished">2023-05-23</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/blog/categories/Python/">Python</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="p-name article-title" itemprop="headline name">
+      Using asyncio start_tls in Python 3.11
+    </h1>
+  
+
+      </header>
+    
+    <div class="e-content article-entry" itemprop="articleBody">
+      
+        <p>An upgradable stream starts life as a plain old socket connection, but is capable of being “upgraded” to use Transport Layer Security (TLS). This is sometimes known as STARTTLS. Common examples of this are SMTP, LDAP, and HTTP proxy tunneling with CONNECT.</p>
+<p>The has been broken in Python, but is fixed in version 3.11!</p>
+<p>To make things work you will need an SSL certificate and key, and for that certificate to be trusted by a certificate chain.</p>
+<p>You can find a gist for this <a target="_blank" rel="noopener" href="https://gist.github.com/rob-blackbourn/100dab4ebd7952c41e9bf2f078e6022b">here</a>.</p>
+<h2 id="Server"><a href="#Server" class="headerlink" title="Server"></a>Server</h2><p>The server starts without TLS. When a client connects, the server responds to three messages:</p>
+<ul>
+<li><code>PING</code> — the server responds with <code>PONG</code>.</li>
+<li><code>STARTLS</code> — the server upgrades the connection to TLS.</li>
+<li><code>QUIT</code> — the server closes the client connection.</li>
+</ul>
+<p>Let’s see the code.</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> asyncio</span><br><span class="line"><span class="keyword">from</span> asyncio <span class="keyword">import</span> StreamReader, StreamWriter</span><br><span class="line"><span class="keyword">from</span> functools <span class="keyword">import</span> partial</span><br><span class="line"><span class="keyword">from</span> os.path <span class="keyword">import</span> expanduser</span><br><span class="line"><span class="keyword">import</span> socket</span><br><span class="line"><span class="keyword">import</span> ssl</span><br><span class="line"></span><br><span class="line"><span class="keyword">async</span> <span class="keyword">def</span> <span class="title function_">handle_client</span>(<span class="params"></span></span><br><span class="line"><span class="params">        ctx: ssl.SSLContext,</span></span><br><span class="line"><span class="params">        reader: StreamReader,</span></span><br><span class="line"><span class="params">        writer: StreamWriter</span></span><br><span class="line"><span class="params"></span>) -&gt; <span class="literal">None</span>:</span><br><span class="line">    <span class="built_in">print</span>(<span class="string">&quot;Client connected&quot;</span>)</span><br><span class="line"></span><br><span class="line">    <span class="keyword">while</span> <span class="literal">True</span>:</span><br><span class="line">        request = (<span class="keyword">await</span> reader.readline()).decode(<span class="string">&#x27;utf8&#x27;</span>).rstrip()</span><br><span class="line">        <span class="built_in">print</span>(<span class="string">f&quot;Read &#x27;<span class="subst">&#123;request&#125;</span>&#x27;&quot;</span>)</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> request == <span class="string">&#x27;QUIT&#x27;</span>:</span><br><span class="line">            <span class="keyword">break</span></span><br><span class="line"></span><br><span class="line">        <span class="keyword">elif</span> request == <span class="string">&#x27;PING&#x27;</span>:</span><br><span class="line">            <span class="built_in">print</span>(<span class="string">&quot;Sending pong&quot;</span>)</span><br><span class="line">            writer.write(<span class="string">b&#x27;PONG\n&#x27;</span>)</span><br><span class="line">            <span class="keyword">await</span> writer.drain()</span><br><span class="line"></span><br><span class="line">        <span class="keyword">elif</span> request == <span class="string">&#x27;STARTTLS&#x27;</span>:</span><br><span class="line">            <span class="built_in">print</span>(<span class="string">&quot;Upgrading connection to TLS&quot;</span>)</span><br><span class="line">            <span class="keyword">await</span> writer.start_tls(ctx)</span><br><span class="line"></span><br><span class="line">    <span class="built_in">print</span>(<span class="string">&quot;Closing client&quot;</span>)</span><br><span class="line">    writer.close()</span><br><span class="line">    <span class="keyword">await</span> writer.wait_closed()</span><br><span class="line">    <span class="built_in">print</span>(<span class="string">&quot;Client closed&quot;</span>)</span><br><span class="line"></span><br><span class="line"><span class="keyword">async</span> <span class="keyword">def</span> <span class="title function_">run_server</span>():</span><br><span class="line">    ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)</span><br><span class="line">    ctx.load_verify_locations(cafile=<span class="string">&quot;/etc/ssl/certs/ca-certificates.crt&quot;</span>)</span><br><span class="line">    ctx.load_cert_chain(</span><br><span class="line">        expanduser(<span class="string">&quot;~/.keys/server.crt&quot;</span>),</span><br><span class="line">        expanduser(<span class="string">&quot;~/.keys/server.key&quot;</span>)</span><br><span class="line">    )</span><br><span class="line"></span><br><span class="line">    handler = partial(handle_client, ctx)</span><br><span class="line"></span><br><span class="line">    <span class="built_in">print</span>(<span class="string">&quot;Starting server&quot;</span>)</span><br><span class="line">    server = <span class="keyword">await</span> asyncio.start_server(socket.getfqdn(), host, <span class="number">10001</span>)</span><br><span class="line"></span><br><span class="line">    <span class="keyword">async</span> <span class="keyword">with</span> server:</span><br><span class="line">        <span class="keyword">await</span> server.serve_forever()</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> __name__ == <span class="string">&#x27;__main__&#x27;</span>:</span><br><span class="line">    asyncio.run(run_server())</span><br></pre></td></tr></table></figure>
+
+<p>Looking at the <code>run_server</code> function, the first job is to build the SLL context. After creating the context, the certificate authority bundle is loaded, then the certificate and key.</p>
+<p>The partial function binds the SSL context as the first argument to the <code>handle_client</code> callback.</p>
+<p>The server is then started without TLS and set running. The fully qualified domain name (FQDN) is used for the host (the “any” address “0.0.0.0” would be fine, but the FQDN works better on Windows).</p>
+<p>When a client connects the <code>handle_client</code> function is called. The function begins a loop. For each iteration the loop starts by reading a line from the client. If it reads <code>PING</code> it writes <code>PONG</code>. If it reads <code>QUIT</code> it breaks out of the loop and closes the connection. If it reads <code>STARTTLS</code> it calls <code>await start_tls(ctx)</code> to upgrade the connection. That’s all there is to it! Very neat.</p>
+<h2 id="Client"><a href="#Client" class="headerlink" title="Client"></a>Client</h2><p>This time let’s start with the code.</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> asyncio</span><br><span class="line"><span class="keyword">import</span> socket</span><br><span class="line"><span class="keyword">import</span> ssl</span><br><span class="line"></span><br><span class="line"><span class="keyword">async</span> <span class="keyword">def</span> <span class="title function_">start_client</span>():</span><br><span class="line"></span><br><span class="line">    <span class="built_in">print</span>(<span class="string">&quot;Connect to the server with using the fully qualified domain name&quot;</span>)</span><br><span class="line">    reader, writer = <span class="keyword">await</span> asyncio.open_connection(socket.getfqdn(), <span class="number">10001</span>)</span><br><span class="line"></span><br><span class="line">    <span class="built_in">print</span>(<span class="string">f&quot;The server certificate is <span class="subst">&#123;writer.get_extra_info(<span class="string">&#x27;peercert&#x27;</span>)&#125;</span>&quot;</span>)</span><br><span class="line"></span><br><span class="line">    <span class="built_in">print</span>(<span class="string">&quot;Sending PING&quot;</span>)</span><br><span class="line">    writer.write(<span class="string">b&#x27;PING\n&#x27;</span>)</span><br><span class="line">    response = (<span class="keyword">await</span> reader.readline()).decode(<span class="string">&#x27;utf-8&#x27;</span>).rstrip()</span><br><span class="line">    <span class="built_in">print</span>(<span class="string">f&quot;Received: <span class="subst">&#123;response&#125;</span>&quot;</span>)</span><br><span class="line"></span><br><span class="line">    <span class="built_in">print</span>(<span class="string">&quot;Sending STARTTLS&quot;</span>)</span><br><span class="line">    writer.write(<span class="string">b&#x27;STARTTLS\n&#x27;</span>)</span><br><span class="line"></span><br><span class="line">    <span class="built_in">print</span>(<span class="string">&quot;Upgrade the connection to TLS&quot;</span>)</span><br><span class="line">    ctx = ssl.create_default_context(</span><br><span class="line">        purpose=ssl.Purpose.SERVER_AUTH,</span><br><span class="line">        cafile=<span class="string">&#x27;/etc/ssl/certs/ca-certificates.crt&#x27;</span></span><br><span class="line">    )</span><br><span class="line">    <span class="keyword">await</span> writer.start_tls(ctx)</span><br><span class="line"></span><br><span class="line">    <span class="built_in">print</span>(<span class="string">f&quot;The server certificate is <span class="subst">&#123;writer.get_extra_info(<span class="string">&#x27;peercert&#x27;</span>)&#125;</span>&quot;</span>)</span><br><span class="line"></span><br><span class="line">    <span class="built_in">print</span>(<span class="string">&quot;Sending PING&quot;</span>)</span><br><span class="line">    writer.write(<span class="string">b&#x27;PING\n&#x27;</span>)</span><br><span class="line">    response = (<span class="keyword">await</span> reader.readline()).decode(<span class="string">&#x27;utf-8&#x27;</span>).rstrip()</span><br><span class="line">    <span class="built_in">print</span>(<span class="string">f&quot;Received: <span class="subst">&#123;response&#125;</span>&quot;</span>)</span><br><span class="line"></span><br><span class="line">    <span class="built_in">print</span>(<span class="string">&quot;Sending QUIT&quot;</span>)</span><br><span class="line">    writer.write(<span class="string">b&#x27;QUIT\n&#x27;</span>)</span><br><span class="line">    <span class="keyword">await</span> writer.drain()</span><br><span class="line"></span><br><span class="line">    <span class="built_in">print</span>(<span class="string">&quot;Closing client&quot;</span>)</span><br><span class="line">    writer.close()</span><br><span class="line">    <span class="keyword">await</span> writer.wait_closed()</span><br><span class="line">    <span class="built_in">print</span>(<span class="string">&quot;Client disconnected&quot;</span>)</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> __name__ == <span class="string">&#x27;__main__&#x27;</span>:</span><br><span class="line">    asyncio.run(start_client())</span><br></pre></td></tr></table></figure>
+
+<p>The client starts by opening a connection without TLS. As with the server the FQDN is used, but this time it’s important. When the client upgrades to TLS the host must match the certificate, so an IP address won’t work. There is a choice here though, as the <code>start_tls</code> call takes the host name as an optional argument. After connecting the client checks to see if there’s an SSL server certificate with <code>get_extra_info(“peercert”)</code> call. This should return <code>None</code>.</p>
+<p>Next the client writes a <code>PING</code> to the server over the unencrypted stream and reads the result (which should be <code>PONG</code>).</p>
+<p>The next step is to upgrade the connection. The client writes <code>STARTTLS</code> to instruct the server to start the handshake. An SSL context is then made, and the <code>start_tls(ctx)</code> function is called on the writer. The client then checks for an SSL server certificate with <code>get_extra_info(&quot;peercert”)</code> which should now exist.</p>
+<p>The client then writes <code>PING</code> over the now encrypted stream and reads the result (which should be <code>PONG</code>).</p>
+<p>Finally the client writes <code>QUIT</code> and closes the connection.</p>
+<h2 id="Thoughts"><a href="#Thoughts" class="headerlink" title="Thoughts"></a>Thoughts</h2><p>It’s been a long time coming, but the result is so simple!</p>
+<p>Good luck with your coding.</p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="https://rob-blackbourn.github.io/blog/2023/05/23/python-start_tls/" data-id="cma87l7ga0054wrjph4x0axp3" data-title="Using asyncio start_tls in Python 3.11" class="article-share-link"><span class="fa fa-share">Share</span></a>
+      
+      
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/blog/tags/asyncio/" rel="tag">asyncio</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/blog/tags/python/" rel="tag">python</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/blog/tags/ssl/" rel="tag">ssl</a></li></ul>
+
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/blog/2024/01/24/wasm-gsl/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Newer</strong>
+      <div class="article-nav-title">
+        
+          Revisiting WebAssembly Cross Compilation in January 2024
+        
+      </div>
+    </a>
+  
+  
+    <a href="/blog/2022/12/21/python-negotiatestream-client/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">A Python client for .Net NegotiateStream</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Categories</h3>
+    <div class="widget">
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/blog/categories/Admin/">Admin</a></li><li class="category-list-item"><a class="category-list-link" href="/blog/categories/Python/">Python</a></li><li class="category-list-item"><a class="category-list-link" href="/blog/categories/Serialization/">Serialization</a></li><li class="category-list-item"><a class="category-list-link" href="/blog/categories/WebAssembly/">WebAssembly</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Tags</h3>
+    <div class="widget">
+      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/7610/" rel="tag">7610</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/C/" rel="tag">C</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/DataFrame/" rel="tag">DataFrame</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/FinalizationRegistry/" rel="tag">FinalizationRegistry</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/JavaScript/" rel="tag">JavaScript</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/NegotiateStream/" rel="tag">NegotiateStream</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/Pydantic/" rel="tag">Pydantic</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/Python/" rel="tag">Python</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/Serialization/" rel="tag">Serialization</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/WebAssembly/" rel="tag">WebAssembly</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/array/" rel="tag">array</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/arrays/" rel="tag">arrays</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/asyncio/" rel="tag">asyncio</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/clang/" rel="tag">clang</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/cross-compile/" rel="tag">cross-compile</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/data/" rel="tag">data</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/dataframe/" rel="tag">dataframe</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/datascience/" rel="tag">datascience</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/dell/" rel="tag">dell</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/finalizer/" rel="tag">finalizer</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/inspiron/" rel="tag">inspiron</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/libc/" rel="tag">libc</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/linux/" rel="tag">linux</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/llvm/" rel="tag">llvm</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/malloc/" rel="tag">malloc</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/marshalling/" rel="tag">marshalling</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/memory/" rel="tag">memory</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/python/" rel="tag">python</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/science/" rel="tag">science</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/series/" rel="tag">series</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/ssl/" rel="tag">ssl</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/strings/" rel="tag">strings</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/ubuntu/" rel="tag">ubuntu</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/ubuntu-20-04/" rel="tag">ubuntu-20.04</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/vscode/" rel="tag">vscode</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/wasi/" rel="tag">wasi</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/wasi-sdk/" rel="tag">wasi-sdk</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/wasm/" rel="tag">wasm</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/wasm-libc/" rel="tag">wasm-libc</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Tag Cloud</h3>
+    <div class="widget tagcloud">
+      <a href="/blog/tags/7610/" style="font-size: 10px;">7610</a> <a href="/blog/tags/C/" style="font-size: 17.5px;">C</a> <a href="/blog/tags/DataFrame/" style="font-size: 12.5px;">DataFrame</a> <a href="/blog/tags/FinalizationRegistry/" style="font-size: 11.25px;">FinalizationRegistry</a> <a href="/blog/tags/JavaScript/" style="font-size: 18.75px;">JavaScript</a> <a href="/blog/tags/NegotiateStream/" style="font-size: 10px;">NegotiateStream</a> <a href="/blog/tags/Pydantic/" style="font-size: 10px;">Pydantic</a> <a href="/blog/tags/Python/" style="font-size: 10px;">Python</a> <a href="/blog/tags/Serialization/" style="font-size: 10px;">Serialization</a> <a href="/blog/tags/WebAssembly/" style="font-size: 20px;">WebAssembly</a> <a href="/blog/tags/array/" style="font-size: 13.75px;">array</a> <a href="/blog/tags/arrays/" style="font-size: 13.75px;">arrays</a> <a href="/blog/tags/asyncio/" style="font-size: 11.25px;">asyncio</a> <a href="/blog/tags/clang/" style="font-size: 16.25px;">clang</a> <a href="/blog/tags/cross-compile/" style="font-size: 11.25px;">cross-compile</a> <a href="/blog/tags/data/" style="font-size: 11.25px;">data</a> <a href="/blog/tags/dataframe/" style="font-size: 11.25px;">dataframe</a> <a href="/blog/tags/datascience/" style="font-size: 10px;">datascience</a> <a href="/blog/tags/dell/" style="font-size: 10px;">dell</a> <a href="/blog/tags/finalizer/" style="font-size: 11.25px;">finalizer</a> <a href="/blog/tags/inspiron/" style="font-size: 10px;">inspiron</a> <a href="/blog/tags/libc/" style="font-size: 12.5px;">libc</a> <a href="/blog/tags/linux/" style="font-size: 10px;">linux</a> <a href="/blog/tags/llvm/" style="font-size: 10px;">llvm</a> <a href="/blog/tags/malloc/" style="font-size: 10px;">malloc</a> <a href="/blog/tags/marshalling/" style="font-size: 12.5px;">marshalling</a> <a href="/blog/tags/memory/" style="font-size: 10px;">memory</a> <a href="/blog/tags/python/" style="font-size: 11.25px;">python</a> <a href="/blog/tags/science/" style="font-size: 11.25px;">science</a> <a href="/blog/tags/series/" style="font-size: 10px;">series</a> <a href="/blog/tags/ssl/" style="font-size: 10px;">ssl</a> <a href="/blog/tags/strings/" style="font-size: 11.25px;">strings</a> <a href="/blog/tags/ubuntu/" style="font-size: 10px;">ubuntu</a> <a href="/blog/tags/ubuntu-20-04/" style="font-size: 10px;">ubuntu-20.04</a> <a href="/blog/tags/vscode/" style="font-size: 10px;">vscode</a> <a href="/blog/tags/wasi/" style="font-size: 11.25px;">wasi</a> <a href="/blog/tags/wasi-sdk/" style="font-size: 15px;">wasi-sdk</a> <a href="/blog/tags/wasm/" style="font-size: 18.75px;">wasm</a> <a href="/blog/tags/wasm-libc/" style="font-size: 12.5px;">wasm-libc</a>
+    </div>
+  </div>
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Archives</h3>
+    <div class="widget">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2025/05/">May 2025</a></li><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2024/01/">January 2024</a></li><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2023/05/">May 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2022/12/">December 2022</a></li><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2021/12/">December 2021</a></li><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2021/07/">July 2021</a></li><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2020/07/">July 2020</a></li><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2020/06/">June 2020</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Recent Posts</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/blog/2025/05/03/pydantic-generic-serialization/">Serializing Pydantic with Metadata and Generic Fields</a>
+          </li>
+        
+          <li>
+            <a href="/blog/2024/01/24/wasm-gsl/">Revisiting WebAssembly Cross Compilation in January 2024</a>
+          </li>
+        
+          <li>
+            <a href="/blog/2023/05/23/python-start_tls/">Using asyncio start_tls in Python 3.11</a>
+          </li>
+        
+          <li>
+            <a href="/blog/2022/12/21/python-negotiatestream-client/">A Python client for .Net NegotiateStream</a>
+          </li>
+        
+          <li>
+            <a href="/blog/2021/12/19/dell-inspiron-7610-linux/">Setting up a Dell Inspiron 16 Plus (7610) for Linux</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      
+        <a rel="license noopener" target="_blank" href="http://creativecommons.org/licenses/by-nc-nd/4.0/"><img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by-nc-nd/4.0/88x31.png" /></a></br>
+All website licensed under <a href="https://creativecommons.org/licenses/by-nc-nd/4.0/" target="_blank">CC BY-NC-ND 4.0</a></br>
+      
+      &copy; 2025 Rob Blackbourn<br>
+      Powered by <a href="https://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/blog/" class="mobile-nav-link">Home</a>
+  
+    <a href="/blog/archives" class="mobile-nav-link">Archives</a>
+  
+</nav>
+    
+
+
+<script src="/blog/js/jquery-3.6.4.min.js"></script>
+
+
+
+  
+<script src="/blog/fancybox/jquery.fancybox.min.js"></script>
+
+
+
+
+<script src="/blog/js/script.js"></script>
+
+
+
+
+
+  </div>
+</body>
+</html>
