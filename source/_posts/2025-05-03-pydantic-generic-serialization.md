@@ -29,7 +29,7 @@ class Color(BaseModel):
     background: str = "black"
     foreground: str
 
-class Property[T: BaseModel](BaseModel):
+class Update[T: BaseModel](BaseModel):
     model: T
 ```
 
